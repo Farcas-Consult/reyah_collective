@@ -1,0 +1,61 @@
+@import "tailwindcss";
+:root {
+    --background: #F5F5DC;
+    --foreground: #3E2723;
+    --beige-50: #FAF8F3;
+    --beige-100: #F5F5DC;
+    --beige-200: #E8E4D9;
+    --beige-300: #D4CFC0;
+    --beige-400: #C0B8A3;
+    --brown-800: #3E2723;
+    --brown-700: #4E342E;
+    --brown-600: #5D4037;
+    --accent: #8B7355;
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+     :root {
+        --background: #2C2416;
+        --foreground: #F5F5DC;
+    }
+}
+
+body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* Ensure input fields have visible text */
+
+input,
+textarea,
+select {
+    color: var(--brown-800) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #9CA3AF !important;
+    opacity: 0.6;
+}
+
+
+/* Fix dark mode input visibility */
+
+@media (prefers-color-scheme: dark) {
+    input,
+    textarea,
+    select {
+        color: var(--foreground) !important;
+        background-color: #1F2937 !important;
+    }
+}
