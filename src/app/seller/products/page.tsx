@@ -221,7 +221,7 @@ export default function SellerProductsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--beige-100)] py-12">
+    <div className="bg-[var(--beige-100)] py-12">
       <div className="max-w-7xl mx-auto px-4">
         <BackButton />
         

@@ -1,17 +1,28 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { Message } from '@/types/message';
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const router = useRouter();
   const { cartCount } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Count unread messages
+      const messages = JSON.parse(localStorage.getItem('reyah_messages') || '[]') as Message[];
+      const unread = messages.filter((msg) => msg.receiverId === user.id && !msg.read).length;
+      setUnreadCount(unread);
+    }
+  }, [isAuthenticated, user]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,6 +222,25 @@ export default function Header() {
                         className="block px-4 py-2 text-[var(--brown-800)] hover:bg-[var(--beige-100)] transition-colors"
                       >
                         My Orders
+                      </Link>
+                      <Link 
+                        href="/account/rewards"
+                        onClick={() => setShowAccountMenu(false)}
+                        className="block px-4 py-2 text-[var(--brown-800)] hover:bg-[var(--beige-100)] transition-colors flex items-center gap-2"
+                      >
+                        <span>⭐ Rewards</span>
+                      </Link>
+                      <Link 
+                        href="/messages"
+                        onClick={() => setShowAccountMenu(false)}
+                        className="block px-4 py-2 text-[var(--brown-800)] hover:bg-[var(--beige-100)] transition-colors flex items-center justify-between"
+                      >
+                        <span>Messages</span>
+                        {unreadCount > 0 && (
+                          <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            {unreadCount}
+                          </span>
+                        )}
                       </Link>
                       <Link 
                         href="/account"

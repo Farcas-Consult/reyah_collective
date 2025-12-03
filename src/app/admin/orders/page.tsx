@@ -4,12 +4,32 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
-import { getOrders, updateOrderStatus } from '@/utils/orders';
+import { 
+  getOrders, 
+  updateOrderStatus, 
+  updateTrackingInfo,
+  calculateEstimatedDelivery,
+  getOrderStatusLabel,
+  getOrderStatusColor,
+  type Order,
+  type OrderStatus,
+  type ShippingCarrier
+} from '@/utils/orders';
 import BackButton from '@/components/BackButton';
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<string>('all');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    status: '' as OrderStatus,
+    trackingNumber: '',
+    carrier: 'REYAH' as ShippingCarrier,
+    estimatedDelivery: '',
+    location: '',
+    note: ''
+  });
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
 
@@ -27,9 +47,55 @@ export default function AdminOrdersPage() {
     setOrders(allOrders.reverse());
   };
 
-  const handleStatusChange = (orderId: string, newStatus: string) => {
-    updateOrderStatus(orderId, newStatus as any);
+  const openEditModal = (order: Order) => {
+    setSelectedOrder(order);
+    setEditForm({
+      status: order.status,
+      trackingNumber: order.trackingNumber || '',
+      carrier: order.trackingInfo?.carrier || 'REYAH',
+      estimatedDelivery: order.estimatedDelivery || calculateEstimatedDelivery(5),
+      location: order.trackingInfo?.currentLocation || '',
+      note: ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateOrder = () => {
+    if (!selectedOrder) return;
+
+    // Update status with history
+    updateOrderStatus(
+      selectedOrder.id,
+      editForm.status,
+      editForm.trackingNumber,
+      editForm.note,
+      editForm.location
+    );
+
+    // Update tracking info
+    if (editForm.trackingNumber) {
+      updateTrackingInfo(selectedOrder.id, {
+        trackingNumber: editForm.trackingNumber,
+        carrier: editForm.carrier,
+        estimatedDelivery: editForm.estimatedDelivery,
+        currentLocation: editForm.location,
+        lastUpdate: new Date().toISOString(),
+        events: []
+      });
+    }
+
+    setShowEditModal(false);
+    setSelectedOrder(null);
     loadOrders();
+  };
+
+  const handleBulkStatusUpdate = (status: OrderStatus) => {
+    if (confirm(`Update all ${filter} orders to ${status}?`)) {
+      filteredOrders.forEach(order => {
+        updateOrderStatus(order.id, status);
+      });
+      loadOrders();
+    }
   };
 
   const filteredOrders = filter === 'all' 
@@ -66,28 +132,42 @@ export default function AdminOrdersPage() {
 
         {/* Filter Tabs */}
         <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] mb-6">
-          <div className="flex gap-2 p-2 overflow-x-auto">
-            {['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-md font-semibold whitespace-nowrap transition-colors ${
-                  filter === status
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'bg-gray-100 text-[var(--brown-700)] hover:bg-[var(--beige-200)]'
-                }`}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-                {status !== 'all' && (
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4">
+            <div className="flex gap-2 overflow-x-auto">
+              {['all', 'pending', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled'].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilter(status)}
+                  className={`px-4 py-2 rounded-md font-semibold whitespace-nowrap transition-colors ${
+                    filter === status
+                      ? 'bg-[var(--accent)] text-white'
+                      : 'bg-gray-100 text-[var(--brown-700)] hover:bg-[var(--beige-200)]'
+                  }`}
+                >
+                  {status === 'all' ? 'All' : getOrderStatusLabel(status as OrderStatus)}
                   <span className="ml-2 text-xs">
-                    ({orders.filter(o => o.status === status).length})
+                    ({status === 'all' ? orders.length : orders.filter(o => o.status === status).length})
                   </span>
-                )}
-                {status === 'all' && (
-                  <span className="ml-2 text-xs">({orders.length})</span>
-                )}
-              </button>
-            ))}
+                </button>
+              ))}
+            </div>
+            
+            {filter !== 'all' && filteredOrders.length > 0 && (
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleBulkStatusUpdate('processing')}
+                  className="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 font-semibold text-sm"
+                >
+                  Mark All Processing
+                </button>
+                <button
+                  onClick={() => handleBulkStatusUpdate('shipped')}
+                  className="px-4 py-2 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 font-semibold text-sm"
+                >
+                  Mark All Shipped
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -107,11 +187,11 @@ export default function AdminOrdersPage() {
                   <tr className="border-b border-[var(--beige-300)] bg-[var(--beige-50)]">
                     <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Order ID</th>
                     <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Customer</th>
-                    <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Email</th>
                     <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Date</th>
                     <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Items</th>
                     <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Total</th>
                     <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Status</th>
+                    <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Tracking</th>
                     <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Actions</th>
                   </tr>
                 </thead>
@@ -123,11 +203,13 @@ export default function AdminOrdersPage() {
                           {order.orderNumber}
                         </span>
                       </td>
-                      <td className="py-4 px-4 text-sm text-[var(--brown-800)]">
-                        {order.customer.firstName} {order.customer.lastName}
-                      </td>
-                      <td className="py-4 px-4 text-sm text-gray-600">
-                        {order.customer.email}
+                      <td className="py-4 px-4">
+                        <div className="text-sm">
+                          <p className="font-semibold text-[var(--brown-800)]">
+                            {order.customer.firstName} {order.customer.lastName}
+                          </p>
+                          <p className="text-gray-600 text-xs">{order.customer.email}</p>
+                        </div>
                       </td>
                       <td className="py-4 px-4 text-sm text-gray-600">
                         {new Date(order.date).toLocaleDateString()}
@@ -136,34 +218,37 @@ export default function AdminOrdersPage() {
                         {order.items.length} item{order.items.length !== 1 ? 's' : ''}
                       </td>
                       <td className="py-4 px-4 text-sm font-bold text-[var(--accent)]">
-                        KSH {order.total.toLocaleString()}
+                        €{order.total.toFixed(2)}
                       </td>
                       <td className="py-4 px-4">
-                        <select
-                          value={order.status}
-                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                          className={`px-3 py-1 rounded-full text-xs font-semibold border-2 cursor-pointer ${
-                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
-                            order.status === 'processing' ? 'bg-blue-100 text-blue-700 border-blue-300' :
-                            order.status === 'shipped' ? 'bg-purple-100 text-purple-700 border-purple-300' :
-                            order.status === 'delivered' ? 'bg-green-100 text-green-700 border-green-300' :
-                            'bg-red-100 text-red-700 border-red-300'
-                          }`}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="processing">Processing</option>
-                          <option value="shipped">Shipped</option>
-                          <option value="delivered">Delivered</option>
-                          <option value="cancelled">Cancelled</option>
-                        </select>
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getOrderStatusColor(order.status)}`}>
+                          {getOrderStatusLabel(order.status)}
+                        </span>
                       </td>
                       <td className="py-4 px-4">
-                        <Link
-                          href={`/account/orders/${order.id}`}
-                          className="text-[var(--accent)] hover:text-[var(--brown-600)] font-semibold text-sm"
-                        >
-                          View Details
-                        </Link>
+                        {order.trackingNumber ? (
+                          <span className="font-mono text-xs text-gray-700">
+                            {order.trackingNumber}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => openEditModal(order)}
+                            className="text-[var(--accent)] hover:text-[var(--brown-600)] font-semibold text-sm"
+                          >
+                            Edit
+                          </button>
+                          <Link
+                            href={`/account/orders/${order.id}`}
+                            className="text-blue-600 hover:text-blue-800 font-semibold text-sm"
+                          >
+                            View
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -172,6 +257,150 @@ export default function AdminOrdersPage() {
             </div>
           )}
         </div>
+
+        {/* Edit Order Modal */}
+        {showEditModal && selectedOrder && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-[var(--brown-800)]">
+                    Update Order {selectedOrder.orderNumber}
+                  </h2>
+                  <button
+                    onClick={() => setShowEditModal(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Status */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Order Status *
+                    </label>
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm({ ...editForm, status: e.target.value as OrderStatus })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="processing">Processing</option>
+                      <option value="shipped">Shipped</option>
+                      <option value="out_for_delivery">Out for Delivery</option>
+                      <option value="delivered">Delivered</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  {/* Tracking Number */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Tracking Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.trackingNumber}
+                      onChange={(e) => setEditForm({ ...editForm, trackingNumber: e.target.value })}
+                      placeholder="e.g., REYAH123456789"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Carrier */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Shipping Carrier
+                    </label>
+                    <select
+                      value={editForm.carrier}
+                      onChange={(e) => setEditForm({ ...editForm, carrier: e.target.value as ShippingCarrier })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    >
+                      <option value="REYAH">REYAH Logistics</option>
+                      <option value="DHL">DHL</option>
+                      <option value="UPS">UPS</option>
+                      <option value="FedEx">FedEx</option>
+                      <option value="USPS">USPS</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  {/* Estimated Delivery */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Estimated Delivery Date
+                    </label>
+                    <input
+                      type="date"
+                      value={editForm.estimatedDelivery}
+                      onChange={(e) => setEditForm({ ...editForm, estimatedDelivery: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Current Location */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Current Location
+                    </label>
+                    <input
+                      type="text"
+                      value={editForm.location}
+                      onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                      placeholder="e.g., Dublin Distribution Center"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Status Update Note */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Status Update Note
+                    </label>
+                    <textarea
+                      value={editForm.note}
+                      onChange={(e) => setEditForm({ ...editForm, note: e.target.value })}
+                      placeholder="Optional note about this status update..."
+                      rows={3}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Customer Info */}
+                  <div className="bg-gray-50 rounded-lg p-4 mt-6">
+                    <h3 className="font-semibold text-gray-900 mb-2">Customer Information</h3>
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p><span className="font-semibold">Name:</span> {selectedOrder.customer.firstName} {selectedOrder.customer.lastName}</p>
+                      <p><span className="font-semibold">Email:</span> {selectedOrder.customer.email}</p>
+                      <p><span className="font-semibold">Phone:</span> {selectedOrder.customer.phone}</p>
+                      <p><span className="font-semibold">Address:</span> {selectedOrder.shipping.address}, {selectedOrder.shipping.city}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={handleUpdateOrder}
+                    className="flex-1 bg-[var(--accent)] text-white px-6 py-3 rounded-lg hover:bg-[var(--brown-600)] transition-colors font-semibold"
+                  >
+                    Update Order
+                  </button>
+                  <button
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors font-semibold"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

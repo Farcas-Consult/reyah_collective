@@ -15,10 +15,15 @@ export interface User {
   sellerStatus?: 'pending' | 'approved' | 'rejected';
   sellerRequestDate?: string;
   sellerApproved?: boolean;
+  sellerRating?: number;
+  sellerReviewCount?: number;
+  sellerTotalSales?: number;
   isSupplier?: boolean;
   companyName?: string;
   supplierType?: string;
   supplierStatus?: 'pending' | 'approved' | 'rejected';
+  supplierRating?: number;
+  supplierReviewCount?: number;
 }
 
 interface AuthContextType {

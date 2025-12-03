@@ -6,10 +6,15 @@ import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import Link from 'next/link';
 import { getOrders, type Order } from '@/utils/orders';
+import ReviewForm from '@/components/ReviewForm';
+import { Review } from '@/types/review';
+import { useAuth } from '@/context/AuthContext';
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviewingOrder, setReviewingOrder] = useState<Order | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const userOrders = getOrders();
@@ -20,6 +25,36 @@ export default function OrdersPage() {
     setOrders(sortedOrders);
     setLoading(false);
   }, []);
+
+  const hasReviewed = (orderId: string): boolean => {
+    const reviews = JSON.parse(localStorage.getItem('reyah_reviews') || '[]');
+    return reviews.some((r: Review) => r.orderId === orderId);
+  };
+
+  const handleSubmitReview = (review: Review) => {
+    // Save review to localStorage
+    const reviews = JSON.parse(localStorage.getItem('reyah_reviews') || '[]');
+    reviews.push(review);
+    localStorage.setItem('reyah_reviews', JSON.stringify(reviews));
+
+    // Update seller ratings
+    const users = JSON.parse(localStorage.getItem('reyah_users') || '[]');
+    const sellerIndex = users.findIndex((u: { id: string }) => u.id === review.sellerId);
+    
+    if (sellerIndex !== -1) {
+      const seller = users[sellerIndex];
+      const sellerReviews = reviews.filter((r: Review) => r.sellerId === review.sellerId && !r.isSupplierReview);
+      const avgRating = sellerReviews.reduce((sum: number, r: Review) => sum + r.rating, 0) / sellerReviews.length;
+      
+      seller.sellerRating = avgRating;
+      seller.sellerReviewCount = sellerReviews.length;
+      
+      localStorage.setItem('reyah_users', JSON.stringify(users));
+    }
+
+    setReviewingOrder(null);
+    alert('Review submitted successfully!');
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -165,18 +200,25 @@ export default function OrdersPage() {
                       >
                         Track Order
                       </Link>
-                      <button 
-                        className="flex-1 min-w-[150px] bg-white border-2 border-[var(--accent)] text-[var(--accent)] px-4 py-2 rounded-md font-semibold hover:bg-[var(--beige-100)] transition-colors"
-                        onClick={() => {
-                          // Copy tracking number to clipboard
-                          if (order.trackingNumber) {
-                            navigator.clipboard.writeText(order.trackingNumber);
+                      {order.status === 'delivered' && !hasReviewed(order.id) && order.sellerId && (
+                        <button 
+                          onClick={() => setReviewingOrder(order)}
+                          className="flex-1 min-w-[150px] bg-green-600 text-white px-4 py-2 rounded-md font-semibold hover:bg-green-700 transition-colors"
+                        >
+                          Leave Review
+                        </button>
+                      )}
+                      {order.trackingNumber && (
+                        <button 
+                          className="flex-1 min-w-[150px] bg-white border-2 border-[var(--accent)] text-[var(--accent)] px-4 py-2 rounded-md font-semibold hover:bg-[var(--beige-100)] transition-colors"
+                          onClick={() => {
+                            navigator.clipboard.writeText(order.trackingNumber!);
                             alert('Tracking number copied to clipboard!');
-                          }
-                        }}
-                      >
-                        Copy Tracking #
-                      </button>
+                          }}
+                        >
+                          Copy Tracking #
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -186,6 +228,18 @@ export default function OrdersPage() {
         </div>
       </main>
       <Footer />
+      
+      {reviewingOrder && user && (
+        <ReviewForm
+          orderId={reviewingOrder.id}
+          sellerId={reviewingOrder.sellerId || ''}
+          sellerName={reviewingOrder.sellerName || 'Seller'}
+          buyerId={user.id}
+          buyerName={`${user.firstName} ${user.lastName}`}
+          onSubmit={handleSubmitReview}
+          onCancel={() => setReviewingOrder(null)}
+        />
+      )}
     </div>
   );
 }

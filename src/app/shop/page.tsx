@@ -6,7 +6,10 @@ import BackButton from '@/components/BackButton';
 import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import { useCart } from '@/context/CartContext';
+import { calculateReviewStats } from '@/utils/productReviews';
+import { addToComparison, isInComparison, removeFromComparison } from '@/utils/comparison';
 import Link from 'next/link';
+import StarRating from '@/components/StarRating';
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -15,10 +18,13 @@ function ShopContent() {
   const { addToCart } = useCart();
   const [addedToCart, setAddedToCart] = useState<number | null>(null);
   const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [comparisonStates, setComparisonStates] = useState<{[key: number]: boolean}>({});
   
   const [selectedCategory, setSelectedCategory] = useState(categoryQuery);
+  const [selectedSeller, setSelectedSeller] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 40000]);
+  const [sellers, setSellers] = useState<string[]>([]);
 
   const categories = ['All Products', 'Jewelry', 'Home Decor', 'Vintage', 'Art', 'Crafts', 'Eco-Friendly', 'Food', 'Clothing', 'Wellness', 'Kids', 'Books'];
 
@@ -27,6 +33,8 @@ function ShopContent() {
     const loadProducts = () => {
       // Get admin products from localStorage
       const adminProducts = JSON.parse(localStorage.getItem('reyah_products') || '[]');
+      const users = JSON.parse(localStorage.getItem('reyah_users') || '[]');
+      const reviews = JSON.parse(localStorage.getItem('reyah_reviews') || '[]');
       
       // Default products if no admin products exist
       const defaultProducts = [
@@ -56,24 +64,51 @@ function ShopContent() {
       ];
 
       // Merge admin products with default products, converting admin product structure
-      const convertedAdminProducts = adminProducts.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        price: p.price,
-        category: p.category,
-        brand: p.seller || 'Unknown Seller',
-        tags: [p.category.toLowerCase(), p.name.toLowerCase()],
-        image: p.image || '',
-        description: p.description || '',
-        stock: p.stock || 0
-      }));
+      const convertedAdminProducts = adminProducts.map((p: any) => {
+        const seller = users.find((u: any) => u.id === p.sellerId);
+        const sellerReviews = reviews.filter((r: any) => r.sellerId === p.sellerId && !r.isSupplierReview);
+        const sellerRating = sellerReviews.length > 0 
+          ? sellerReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / sellerReviews.length 
+          : 0;
+        
+        return {
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          category: p.category,
+          brand: seller?.sellerName || 'Unknown Seller',
+          tags: [p.category.toLowerCase(), p.name.toLowerCase()],
+          image: p.image || '',
+          description: p.description || '',
+          stock: p.stock || 0,
+          sellerId: p.sellerId,
+          sellerName: seller?.sellerName,
+          sellerRating: sellerRating,
+          sellerReviewCount: sellerReviews.length
+        };
+      });
 
       const combinedProducts = [...convertedAdminProducts, ...defaultProducts];
       setAllProducts(combinedProducts);
       setFilteredProducts(combinedProducts);
+      
+      // Extract unique sellers
+      const uniqueSellers = Array.from(new Set(
+        convertedAdminProducts
+          .filter((p: any) => p.sellerName)
+          .map((p: any) => p.sellerName)
+      )) as string[];
+      setSellers(uniqueSellers);
     };
 
     loadProducts();
+    
+    // Initialize comparison states
+    const states: {[key: number]: boolean} = {};
+    allProducts.forEach(p => {
+      states[p.id] = isInComparison(p.id);
+    });
+    setComparisonStates(states);
   }, []);
 
   const handleAddToCart = (product: any) => {
@@ -87,6 +122,22 @@ function ShopContent() {
     });
     setAddedToCart(product.id);
     setTimeout(() => setAddedToCart(null), 2000);
+  };
+
+  const handleToggleComparison = (productId: number) => {
+    const inComp = comparisonStates[productId];
+    
+    if (inComp) {
+      removeFromComparison(productId);
+      setComparisonStates(prev => ({ ...prev, [productId]: false }));
+    } else {
+      const added = addToComparison(productId);
+      if (added) {
+        setComparisonStates(prev => ({ ...prev, [productId]: true }));
+      } else {
+        alert('Maximum number of products reached for comparison. Please remove some products first.');
+      }
+    }
   };
 
   useEffect(() => {
@@ -108,13 +159,18 @@ function ShopContent() {
       results = results.filter(product => product.category === selectedCategory);
     }
 
+    // Filter by seller
+    if (selectedSeller) {
+      results = results.filter(product => product.sellerName === selectedSeller);
+    }
+
     // Filter by price range
     results = results.filter(product => 
       product.price >= priceRange[0] && product.price <= priceRange[1]
     );
 
     setFilteredProducts(results);
-  }, [searchQuery, selectedCategory, priceRange]);
+  }, [searchQuery, selectedCategory, selectedSeller, priceRange, allProducts]);
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
       <Header />
@@ -156,6 +212,41 @@ function ShopContent() {
                     ))}
                   </ul>
                 </div>
+
+                {/* Sellers */}
+                {sellers.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="font-semibold text-[var(--brown-800)] mb-3 text-sm uppercase tracking-wide">Sellers</h4>
+                    <ul className="space-y-2">
+                      <li>
+                        <button
+                          onClick={() => setSelectedSeller('')}
+                          className={`text-sm transition-colors w-full text-left px-3 py-1.5 rounded ${
+                            !selectedSeller
+                              ? 'bg-[var(--accent)] text-white font-medium'
+                              : 'text-[var(--brown-700)] hover:text-[var(--accent)] hover:bg-[var(--beige-200)]'
+                          }`}
+                        >
+                          All Sellers
+                        </button>
+                      </li>
+                      {sellers.map((seller) => (
+                        <li key={seller}>
+                          <button
+                            onClick={() => setSelectedSeller(seller)}
+                            className={`text-sm transition-colors w-full text-left px-3 py-1.5 rounded ${
+                              selectedSeller === seller
+                                ? 'bg-[var(--accent)] text-white font-medium'
+                                : 'text-[var(--brown-700)] hover:text-[var(--accent)] hover:bg-[var(--beige-200)]'
+                            }`}
+                          >
+                            {seller}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 {/* Price Range */}
                 <div>
@@ -230,18 +321,80 @@ function ShopContent() {
                             {product.name}
                           </h3>
                         </Link>
+                        
+                        {/* Seller Info */}
+                        {product.sellerName && (
+                          <div className="flex items-center justify-between py-1">
+                            <Link 
+                              href={`/seller/profile/${encodeURIComponent(product.sellerName)}`}
+                              className="flex items-center gap-2 text-xs text-green-700 hover:text-green-800 font-medium"
+                            >
+                              <span className="px-2 py-0.5 bg-green-100 rounded border border-green-300">
+                                ✓ {product.sellerName}
+                              </span>
+                            </Link>
+                            {product.sellerRating > 0 && (
+                              <StarRating 
+                                rating={product.sellerRating} 
+                                size="sm" 
+                                showNumber={false}
+                              />
+                            )}
+                          </div>
+                        )}
+
+                        {/* Product Reviews */}
+                        {(() => {
+                          const stats = calculateReviewStats(product.id);
+                          if (stats.totalReviews > 0) {
+                            return (
+                              <div className="flex items-center gap-2 py-1">
+                                <div className="flex items-center gap-1">
+                                  <StarRating 
+                                    rating={stats.averageRating} 
+                                    size="sm" 
+                                    showNumber={false}
+                                  />
+                                  <span className="text-xs font-semibold text-[var(--brown-800)]">
+                                    {stats.averageRating.toFixed(1)}
+                                  </span>
+                                </div>
+                                <span className="text-xs text-gray-500">
+                                  ({stats.totalReviews} review{stats.totalReviews !== 1 ? 's' : ''})
+                                </span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
+                        
                         <div className="flex items-center justify-between pt-2">
                           <p className="text-lg text-[var(--brown-800)] font-bold">KSH {product.price.toLocaleString()}</p>
-                          <button 
-                            onClick={() => handleAddToCart(product)}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                              addedToCart === product.id
-                                ? 'bg-green-600 text-white'
-                                : 'bg-[var(--accent)] text-white hover:bg-[var(--brown-600)]'
-                            }`}
-                          >
-                            {addedToCart === product.id ? '✓ Added' : 'Add to Cart'}
-                          </button>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => handleToggleComparison(product.id)}
+                              className={`p-1.5 rounded-md text-sm transition-colors ${
+                                comparisonStates[product.id]
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-white border border-[var(--beige-300)] text-[var(--accent)] hover:bg-[var(--beige-50)]'
+                              }`}
+                              title={comparisonStates[product.id] ? 'Remove from comparison' : 'Add to comparison'}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                              </svg>
+                            </button>
+                            <button 
+                              onClick={() => handleAddToCart(product)}
+                              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                addedToCart === product.id
+                                  ? 'bg-green-600 text-white'
+                                  : 'bg-[var(--accent)] text-white hover:bg-[var(--brown-600)]'
+                              }`}
+                            >
+                              {addedToCart === product.id ? '✓ Added' : 'Add to Cart'}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

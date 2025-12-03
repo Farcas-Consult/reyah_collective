@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import BackButton from '@/components/BackButton'
+import StarRating from '@/components/StarRating'
+import ReviewDisplay from '@/components/ReviewDisplay'
+import { Review } from '@/types/review'
 
 interface Product {
   id: string
@@ -41,6 +44,20 @@ interface MonthlyRevenue {
   orders: number
 }
 
+interface ReviewTrend {
+  month: string
+  averageRating: number
+  reviewCount: number
+}
+
+interface CustomerFeedback {
+  averageRating: number
+  totalReviews: number
+  ratingBreakdown: { 5: number; 4: number; 3: number; 2: number; 1: number }
+  satisfactionRate: number
+  recentReviews: Review[]
+}
+
 export default function SellerAnalyticsPage() {
   const router = useRouter()
   const { user } = useAuth()
@@ -48,6 +65,14 @@ export default function SellerAnalyticsPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [topProducts, setTopProducts] = useState<ProductSale[]>([])
   const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenue[]>([])
+  const [reviewTrends, setReviewTrends] = useState<ReviewTrend[]>([])
+  const [customerFeedback, setCustomerFeedback] = useState<CustomerFeedback>({
+    averageRating: 0,
+    totalReviews: 0,
+    ratingBreakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+    satisfactionRate: 0,
+    recentReviews: []
+  })
   const [timeRange, setTimeRange] = useState('30') // days
 
   useEffect(() => {
@@ -111,6 +136,47 @@ export default function SellerAnalyticsPage() {
         calculateMonthlyRevenue(sellerOrders)
       }
     }
+    
+    // Load customer feedback
+    loadCustomerFeedback()
+  }
+
+  const loadCustomerFeedback = () => {
+    const allReviews = JSON.parse(localStorage.getItem('reyah_reviews') || '[]') as Review[]
+    const sellerReviews = allReviews.filter(r => r.sellerId === user?.id && !r.isSupplierReview)
+    
+    // Filter by time range
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - parseInt(timeRange))
+    const recentReviews = sellerReviews.filter(r => new Date(r.date) >= cutoffDate)
+    
+    // Calculate rating breakdown
+    const breakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    recentReviews.forEach(r => {
+      breakdown[r.rating as keyof typeof breakdown]++
+    })
+    
+    // Calculate average rating
+    const avgRating = recentReviews.length > 0
+      ? recentReviews.reduce((sum, r) => sum + r.rating, 0) / recentReviews.length
+      : 0
+    
+    // Calculate satisfaction rate (4-5 stars)
+    const satisfiedReviews = recentReviews.filter(r => r.rating >= 4).length
+    const satisfactionRate = recentReviews.length > 0
+      ? (satisfiedReviews / recentReviews.length) * 100
+      : 0
+    
+    setCustomerFeedback({
+      averageRating: avgRating,
+      totalReviews: recentReviews.length,
+      ratingBreakdown: breakdown,
+      satisfactionRate,
+      recentReviews: recentReviews.slice(-5).reverse()
+    })
+    
+    // Calculate review trends by month
+    calculateReviewTrends(sellerReviews)
   }
 
   const calculateTopProducts = (sellerOrders: Order[]) => {
@@ -163,6 +229,47 @@ export default function SellerAnalyticsPage() {
     setMonthlyRevenue(sorted)
   }
 
+  const calculateReviewTrends = (allSellerReviews: Review[]) => {
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - parseInt(timeRange))
+    const recentReviews = allSellerReviews.filter(r => new Date(r.date) >= cutoffDate)
+    
+    const monthlyReviews: { [key: string]: ReviewTrend } = {}
+    
+    recentReviews.forEach(review => {
+      const date = new Date(review.date)
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+      
+      if (!monthlyReviews[monthKey]) {
+        monthlyReviews[monthKey] = {
+          month: monthName,
+          averageRating: 0,
+          reviewCount: 0
+        }
+      }
+      
+      monthlyReviews[monthKey].reviewCount += 1
+    })
+    
+    // Calculate average ratings
+    Object.keys(monthlyReviews).forEach(monthKey => {
+      const monthReviews = recentReviews.filter(r => {
+        const date = new Date(r.date)
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        return key === monthKey
+      })
+      
+      const avgRating = monthReviews.reduce((sum, r) => sum + r.rating, 0) / monthReviews.length
+      monthlyReviews[monthKey].averageRating = avgRating
+    })
+    
+    const sorted = Object.values(monthlyReviews)
+      .sort((a, b) => a.month.localeCompare(b.month))
+    
+    setReviewTrends(sorted)
+  }
+
   const calculateOverallStats = () => {
     const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0)
     const totalOrders = orders.length
@@ -185,7 +292,7 @@ export default function SellerAnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--beige-100)] py-12">
+    <div className="bg-[var(--beige-100)] py-12">
       <div className="max-w-7xl mx-auto px-4">
         <BackButton />
         
@@ -387,6 +494,118 @@ export default function SellerAnalyticsPage() {
             </div>
           </div>
         </div>
+
+        {/* Customer Feedback Section */}
+        <div className="grid md:grid-cols-2 gap-6 mt-6">
+          {/* Customer Satisfaction Overview */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-bold text-[var(--brown-800)] mb-6">Customer Satisfaction</h2>
+            
+            <div className="text-center mb-6">
+              <div className="inline-block">
+                <p className="text-5xl font-bold text-[var(--accent)] mb-2">
+                  {customerFeedback.averageRating.toFixed(1)}
+                </p>
+                <StarRating rating={customerFeedback.averageRating} size="lg" showNumber={false} />
+                <p className="text-sm text-gray-600 mt-2">{customerFeedback.totalReviews} reviews</p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold">Satisfaction Rate</span>
+                <span className="text-lg font-bold text-green-600">
+                  {customerFeedback.satisfactionRate.toFixed(0)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-green-600 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${customerFeedback.satisfactionRate}%` }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Customers rating 4-5 stars</p>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-[var(--brown-800)] mb-3">Rating Breakdown</h3>
+              {[5, 4, 3, 2, 1].map((rating) => {
+                const count = customerFeedback.ratingBreakdown[rating as keyof typeof customerFeedback.ratingBreakdown]
+                const percentage = customerFeedback.totalReviews > 0 
+                  ? (count / customerFeedback.totalReviews) * 100 
+                  : 0
+                
+                return (
+                  <div key={rating} className="flex items-center gap-2">
+                    <span className="text-sm font-semibold w-8">{rating}★</span>
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-yellow-400 rounded-full transition-all duration-500"
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                    <span className="text-sm text-gray-600 w-12 text-right">{count}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Review Trends Chart */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-bold text-[var(--brown-800)] mb-6">Review Trends</h2>
+            {reviewTrends.length > 0 ? (
+              <div className="space-y-4">
+                {reviewTrends.map((trend) => (
+                  <div key={trend.month}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-[var(--brown-800)]">
+                        {trend.month}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1">
+                          <span className="text-yellow-400 text-sm">★</span>
+                          <span className="text-sm font-bold text-[var(--accent)]">
+                            {trend.averageRating.toFixed(1)}
+                          </span>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          ({trend.reviewCount} reviews)
+                        </span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-full rounded-full flex items-center justify-end pr-2 transition-all duration-500"
+                        style={{ width: `${(trend.averageRating / 5) * 100}%` }}
+                      >
+                        {trend.averageRating > 2.5 && (
+                          <span className="text-white text-xs font-bold">
+                            {trend.averageRating.toFixed(1)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-8">No review data available for this time range.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Recent Customer Feedback */}
+        {customerFeedback.recentReviews.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+            <h2 className="text-xl font-bold text-[var(--brown-800)] mb-6">Recent Customer Feedback</h2>
+            <div className="space-y-4">
+              {customerFeedback.recentReviews.map((review) => (
+                <ReviewDisplay key={review.id} review={review} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
