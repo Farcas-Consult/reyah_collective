@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import BackButton from '@/components/BackButton';
+import StarRating from '@/components/StarRating';
+import ReviewDisplay from '@/components/ReviewDisplay';
+import { Review } from '@/types/review';
 
 export default function SellerDashboard() {
   const [stats, setStats] = useState({
@@ -12,8 +15,11 @@ export default function SellerDashboard() {
     totalSales: 0,
     totalRevenue: 0,
     pendingOrders: 0,
+    averageRating: 0,
+    totalReviews: 0,
   });
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [recentReviews, setRecentReviews] = useState<Review[]>([]);
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
 
@@ -29,6 +35,7 @@ export default function SellerDashboard() {
   const loadDashboardData = () => {
     const products = JSON.parse(localStorage.getItem('reyah_products') || '[]');
     const orders = JSON.parse(localStorage.getItem('reyah_orders') || '[]');
+    const reviews = JSON.parse(localStorage.getItem('reyah_reviews') || '[]');
 
     // Filter products by seller
     const sellerProducts = products.filter((p: any) => p.seller === user?.sellerName);
@@ -40,6 +47,12 @@ export default function SellerDashboard() {
         return product && product.seller === user?.sellerName;
       })
     );
+
+    // Get seller reviews
+    const sellerReviews = reviews.filter((r: Review) => r.sellerId === user?.id && !r.isSupplierReview);
+    const avgRating = sellerReviews.length > 0
+      ? sellerReviews.reduce((sum: number, r: Review) => sum + r.rating, 0) / sellerReviews.length
+      : 0;
 
     // Calculate stats
     const totalRevenue = sellerOrders.reduce((sum: number, order: any) => {
@@ -55,10 +68,15 @@ export default function SellerDashboard() {
       totalSales: sellerOrders.length,
       totalRevenue,
       pendingOrders: sellerOrders.filter((o: any) => o.status === 'pending' || o.status === 'processing').length,
+      averageRating: avgRating,
+      totalReviews: sellerReviews.length,
     });
 
     // Get recent orders (last 5)
     setRecentOrders(sellerOrders.slice(-5).reverse());
+    
+    // Get recent reviews (last 3)
+    setRecentReviews(sellerReviews.slice(-3).reverse());
   };
 
   if (!isAuthenticated || !user?.isSeller) {
@@ -66,7 +84,7 @@ export default function SellerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--beige-100)]">
+    <div className="bg-[var(--beige-100)]">
       {/* Seller Header */}
       <header className="bg-white shadow-md border-b border-[var(--beige-300)]">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -98,7 +116,7 @@ export default function SellerDashboard() {
         <h1 className="text-3xl font-bold text-[var(--brown-800)] mb-8">Seller Dashboard</h1>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -144,6 +162,34 @@ export default function SellerDashboard() {
           <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] p-6">
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-sm text-gray-600 mb-1">Customer Rating</p>
+                <div className="flex items-center gap-2">
+                  <StarRating rating={stats.averageRating} size="lg" />
+                </div>
+              </div>
+              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                <span className="text-2xl">⭐</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Reviews</p>
+                <p className="text-3xl font-bold text-[var(--brown-800)]">{stats.totalReviews}</p>
+              </div>
+              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] p-6">
+            <div className="flex items-center justify-between">
+              <div>
                 <p className="text-sm text-gray-600 mb-1">Pending Orders</p>
                 <p className="text-3xl font-bold text-yellow-600">{stats.pendingOrders}</p>
               </div>
@@ -157,7 +203,7 @@ export default function SellerDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Link
             href="/seller/products"
             className="bg-white rounded-lg shadow-sm border-2 border-[var(--accent)] p-6 hover:shadow-md transition-shadow"
@@ -181,6 +227,17 @@ export default function SellerDashboard() {
           </Link>
 
           <Link
+            href="/seller/questions"
+            className="bg-white rounded-lg shadow-sm border-2 border-[var(--accent)] p-6 hover:shadow-md transition-shadow"
+          >
+            <svg className="w-8 h-8 text-[var(--accent)] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="font-bold text-[var(--brown-800)] mb-2">Customer Q&A</h3>
+            <p className="text-sm text-[var(--brown-700)]">Answer product questions</p>
+          </Link>
+
+          <Link
             href="/seller/analytics"
             className="bg-white rounded-lg shadow-sm border-2 border-[var(--accent)] p-6 hover:shadow-md transition-shadow"
           >
@@ -192,6 +249,25 @@ export default function SellerDashboard() {
           </Link>
         </div>
 
+        {/* Recent Reviews Section */}
+        {recentReviews.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] p-6 mb-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-[var(--brown-800)]">Recent Customer Reviews</h2>
+              <Link 
+                href={`/seller/profile/${encodeURIComponent(user?.sellerName || '')}`}
+                className="text-sm text-[var(--accent)] hover:text-[var(--brown-600)] font-semibold"
+              >
+                View All Reviews
+              </Link>
+            </div>
+            <div className="space-y-4">
+              {recentReviews.map((review) => (
+                <ReviewDisplay key={review.id} review={review} />
+              ))}
+            </div>
+          </div>
+        )}
         {/* Recent Orders */}
         <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] p-6">
           <div className="flex items-center justify-between mb-6">

@@ -1,20 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { saveOrder, generateOrderNumber, generateTrackingNumber, sendOrderConfirmationEmail } from '@/utils/orders';
+import { awardPurchasePoints, getActiveRedeemedRewards, validateRewardCode, markRewardAsUsed } from '@/utils/loyalty';
+import { RedeemedReward } from '@/types/loyalty';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { cartItems, cartTotal, clearCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
+
+  // Load active redeemed rewards
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const rewards = getActiveRedeemedRewards(user.email);
+      setActiveRewards(rewards);
+    }
+  }, [isAuthenticated, user]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [pointsEarned, setPointsEarned] = useState(0);
+  const [activeRewards, setActiveRewards] = useState<RedeemedReward[]>([]);
+  const [selectedRewardCode, setSelectedRewardCode] = useState('');
+  const [rewardDiscount, setRewardDiscount] = useState(0);
+  const [freeShipping, setFreeShipping] = useState(false);
 
   const [formData, setFormData] = useState({
     // Contact Information
@@ -40,12 +57,48 @@ export default function CheckoutPage() {
   });
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shippingCost = subtotal > 5000 ? 0 : 500;
-  const total = subtotal + shippingCost;
+  const baseShippingCost = subtotal > 5000 ? 0 : 500;
+  const shippingCost = freeShipping ? 0 : baseShippingCost;
+  const discountedSubtotal = Math.max(0, subtotal - rewardDiscount);
+  const total = discountedSubtotal + shippingCost;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleApplyReward = (rewardCode: string) => {
+    if (!user) return;
+
+    const validation = validateRewardCode(rewardCode, user.email);
+    if (!validation.valid) {
+      alert(validation.message);
+      return;
+    }
+
+    const reward = activeRewards.find(r => r.code === rewardCode);
+    if (!reward) return;
+
+    setSelectedRewardCode(rewardCode);
+
+    // Calculate discount based on reward type
+    if (reward.rewardType === 'discount_percentage') {
+      const discount = Math.round((subtotal * reward.rewardValue) / 100);
+      setRewardDiscount(discount);
+      setFreeShipping(false);
+    } else if (reward.rewardType === 'discount_fixed') {
+      setRewardDiscount(reward.rewardValue);
+      setFreeShipping(false);
+    } else if (reward.rewardType === 'free_shipping') {
+      setRewardDiscount(0);
+      setFreeShipping(true);
+    }
+  };
+
+  const handleRemoveReward = () => {
+    setSelectedRewardCode('');
+    setRewardDiscount(0);
+    setFreeShipping(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,7 +145,12 @@ export default function CheckoutPage() {
         total,
         trackingNumber: trackingNum,
         estimatedDelivery: estimatedDelivery.toISOString(),
-        notes: formData.notes
+        notes: formData.notes,
+        statusHistory: [{
+          status: 'pending' as const,
+          timestamp: new Date().toISOString(),
+          note: 'Order placed'
+        }]
       };
 
       // Save order to localStorage
@@ -100,6 +158,25 @@ export default function CheckoutPage() {
 
       // Send confirmation email
       await sendOrderConfirmationEmail(order);
+
+      // Mark reward as used if one was applied
+      if (selectedRewardCode) {
+        markRewardAsUsed(selectedRewardCode, order.id);
+      }
+
+      // Award loyalty points for purchase
+      if (isAuthenticated && user) {
+        const transaction = awardPurchasePoints(
+          user.email, // customerId
+          user.email, // customerEmail
+          `${user.firstName} ${user.lastName}`, // customerName
+          total, // orderTotal
+          order.id // orderId
+        );
+        if (transaction) {
+          setPointsEarned(transaction.points);
+        }
+      }
 
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -165,6 +242,15 @@ export default function CheckoutPage() {
                 <p className="text-sm text-[var(--brown-700)] mb-2">Order Total</p>
                 <p className="text-3xl font-bold text-[var(--accent)]">KSH {total.toLocaleString()}</p>
               </div>
+              {pointsEarned > 0 && (
+                <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-6">
+                  <p className="text-yellow-800 font-semibold flex items-center justify-center gap-2">
+                    <span className="text-2xl">⭐</span>
+                    You earned {pointsEarned} loyalty points!
+                  </p>
+                  <p className="text-sm text-yellow-700 mt-1">View your rewards in your account dashboard</p>
+                </div>
+              )}
               <p className="text-sm text-gray-600 mb-6">Redirecting to order tracking...</p>
               <div className="flex gap-3 justify-center">
                 <Link href="/account/orders" className="inline-block bg-[var(--accent)] text-white px-6 py-3 rounded-md font-semibold hover:bg-[var(--brown-600)] transition-colors">
@@ -398,14 +484,86 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
+                {/* Available Rewards Section */}
+                {isAuthenticated && activeRewards.length > 0 && (
+                  <div className="mb-6 pb-6 border-b border-[var(--beige-300)]">
+                    <h3 className="text-sm font-bold text-[var(--brown-800)] mb-3 flex items-center gap-2">
+                      <span className="text-yellow-500">⭐</span>
+                      Available Rewards
+                    </h3>
+                    {!selectedRewardCode ? (
+                      <div className="space-y-2">
+                        {activeRewards.map((reward) => (
+                          <button
+                            key={reward.id}
+                            type="button"
+                            onClick={() => handleApplyReward(reward.code)}
+                            className="w-full text-left p-3 bg-yellow-50 border border-yellow-200 rounded-lg hover:bg-yellow-100 transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900">{reward.rewardName}</p>
+                                <p className="text-xs text-gray-600 mt-1">
+                                  {reward.rewardType === 'discount_percentage' && `${reward.rewardValue}% off`}
+                                  {reward.rewardType === 'discount_fixed' && `KSH ${reward.rewardValue} off`}
+                                  {reward.rewardType === 'free_shipping' && 'Free Shipping'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Expires: {new Date(reward.expiresAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <span className="text-xs text-[var(--accent)] font-semibold whitespace-nowrap">Apply</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-green-800 flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              Reward Applied
+                            </p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              {activeRewards.find(r => r.code === selectedRewardCode)?.rewardName}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleRemoveReward}
+                            className="text-xs text-red-600 hover:text-red-800 font-semibold"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Pricing */}
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-[var(--brown-700)]">
                     <span>Subtotal</span>
                     <span className="font-semibold">KSH {subtotal.toLocaleString()}</span>
                   </div>
+                  {rewardDiscount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span className="flex items-center gap-1">
+                        <span className="text-yellow-500">⭐</span>
+                        Reward Discount
+                      </span>
+                      <span className="font-semibold">-KSH {rewardDiscount.toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-[var(--brown-700)]">
-                    <span>Shipping</span>
+                    <span className="flex items-center gap-1">
+                      Shipping
+                      {freeShipping && <span className="text-xs text-yellow-600">(Reward)</span>}
+                    </span>
                     <span className="font-semibold">
                       {shippingCost === 0 ? (
                         <span className="text-green-600">FREE</span>

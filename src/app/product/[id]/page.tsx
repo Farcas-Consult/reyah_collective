@@ -1,11 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { Message } from '@/types/message';
+import { ProductReview } from '@/types/productReview';
+import { 
+  getProductReviews, 
+  calculateReviewStats, 
+  sortReviews,
+  hasCustomerReviewed,
+  hasCustomerPurchased 
+} from '@/utils/productReviews';
+import ProductReviewDisplay from '@/components/ProductReviewDisplay';
+import ProductReviewForm from '@/components/ProductReviewForm';
+import ProductQA from '@/components/ProductQA';
+import { addToComparison, isInComparison, removeFromComparison } from '@/utils/comparison';
 import Link from 'next/link';
 
 // Sample product data - in a real app, this would come from an API/database
@@ -25,12 +39,66 @@ export default function ProductPage() {
   const params = useParams();
   const router = useRouter();
   const { addToCart } = useCart();
+  const { user, isAuthenticated } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
+  const [sortBy, setSortBy] = useState<'date' | 'rating-high' | 'rating-low' | 'helpful'>('date');
+  const [editingReview, setEditingReview] = useState<ProductReview | null>(null);
+  const [inComparison, setInComparison] = useState(false);
 
   const productId = parseInt(params.id as string);
   const product = allProducts.find(p => p.id === productId);
+
+  useEffect(() => {
+    if (product) {
+      loadReviews();
+      setInComparison(isInComparison(product.id));
+    }
+  }, [product, sortBy]);
+
+  const loadReviews = () => {
+    const productReviews = getProductReviews(productId, 'approved');
+    const sorted = sortReviews(productReviews, sortBy);
+    setReviews(sorted);
+  };
+
+  const handleReviewSubmitSuccess = () => {
+    setShowReviewForm(false);
+    setEditingReview(null);
+    loadReviews();
+  };
+
+  const handleEditReview = (review: ProductReview) => {
+    setEditingReview(review);
+    setShowReviewForm(true);
+  };
+
+  const canWriteReview = () => {
+    if (!isAuthenticated || !user) return false;
+    const alreadyReviewed = hasCustomerReviewed(productId, user.email);
+    return !alreadyReviewed;
+  };
+
+  const stats = product ? calculateReviewStats(productId) : null;
+
+  const handleToggleComparison = () => {
+    if (!product) return;
+    
+    if (inComparison) {
+      removeFromComparison(product.id);
+      setInComparison(false);
+    } else {
+      const added = addToComparison(product.id);
+      if (added) {
+        setInComparison(true);
+      } else {
+        alert('Maximum number of products reached for comparison. Please remove some products first.');
+      }
+    }
+  };
 
   if (!product) {
     return (
@@ -67,6 +135,51 @@ export default function ProductPage() {
   const handleBuyNow = () => {
     handleAddToCart();
     router.push('/cart');
+  };
+
+  const handleContactSeller = () => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    if (!user) return;
+
+    // Get seller info from users
+    const users = JSON.parse(localStorage.getItem('reyah_users') || '[]');
+    const seller = users.find((u: any) => u.sellerName === product.seller);
+
+    if (!seller) {
+      alert('Seller not found');
+      return;
+    }
+
+    // Create or find existing conversation
+    const conversationId = [user.id, seller.id].sort().join('-');
+    const allMessages = JSON.parse(localStorage.getItem('reyah_messages') || '[]');
+    
+    // Check if conversation exists
+    const existingConversation = allMessages.find((msg: Message) => msg.conversationId === conversationId);
+
+    if (!existingConversation) {
+      // Create initial message
+      const initialMessage: Message = {
+        id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        conversationId,
+        senderId: user.id,
+        senderName: `${user.firstName} ${user.lastName}`,
+        receiverId: seller.id,
+        receiverName: seller.sellerName,
+        message: `Hi! I'm interested in your product: ${product.name}`,
+        timestamp: new Date().toISOString(),
+        read: false,
+      };
+      
+      allMessages.push(initialMessage);
+      localStorage.setItem('reyah_messages', JSON.stringify(allMessages));
+    }
+
+    router.push('/messages');
   };
 
   return (
@@ -133,7 +246,7 @@ export default function ProductPage() {
               {/* Seller Info */}
               <div className="border border-[var(--beige-300)] rounded-lg p-4 bg-white">
                 <h3 className="font-semibold text-[var(--brown-800)] mb-2">Sold by</h3>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-3">
                   <div>
                     <Link href={`/seller/${product.seller.toLowerCase().replace(/\s+/g, '-')}`} className="text-[var(--accent)] font-semibold hover:underline">
                       {product.seller}
@@ -152,6 +265,15 @@ export default function ProductPage() {
                     Visit Shop →
                   </Link>
                 </div>
+                <button
+                  onClick={handleContactSeller}
+                  className="w-full bg-white border-2 border-[var(--accent)] text-[var(--accent)] px-4 py-2 rounded-lg font-semibold hover:bg-[var(--beige-50)] transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Contact Seller
+                </button>
               </div>
 
               {/* Quantity Selector */}
@@ -195,20 +317,41 @@ export default function ProductPage() {
                       : 'bg-[var(--accent)] text-white hover:bg-[var(--brown-600)]'
                   }`}
                 >
-                  {addedToCart ? '✓ Added to Cart' : 'Add to Cart'}
+                  {addedToCart ? '✓ Added to Cart' : product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                 </button>
                 <button
-                  onClick={handleBuyNow}
-                  disabled={product.stock === 0}
-                  className={`flex-1 py-3 px-6 rounded-md font-bold transition-colors ${
-                    product.stock === 0
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-[var(--brown-800)] text-white hover:bg-[var(--brown-700)]'
+                  onClick={handleToggleComparison}
+                  className={`py-3 px-6 rounded-md font-bold transition-colors border-2 ${
+                    inComparison
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-[var(--accent)] border-[var(--accent)] hover:bg-[var(--beige-50)]'
                   }`}
+                  title={inComparison ? 'Remove from comparison' : 'Add to comparison'}
                 >
-                  Buy Now
+                  {inComparison ? '✓ In Comparison' : 'Compare'}
                 </button>
               </div>
+              
+              {inComparison && (
+                <Link
+                  href="/compare"
+                  className="block text-center text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                >
+                  View Comparison →
+                </Link>
+              )}
+
+              <button
+                onClick={handleBuyNow}
+                disabled={product.stock === 0}
+                className={`flex-1 py-3 px-6 rounded-md font-bold transition-colors ${
+                  product.stock === 0
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-[var(--brown-800)] text-white hover:bg-[var(--brown-700)]'
+                }`}
+              >
+                Buy Now
+              </button>
 
               {/* Trust Badges */}
               <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[var(--beige-300)]">
@@ -260,6 +403,169 @@ export default function ProductPage() {
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Customer Reviews Section */}
+          <div className="bg-white rounded-lg border border-[var(--beige-300)] p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-[var(--brown-800)]">Customer Reviews</h2>
+              {canWriteReview() && !showReviewForm && (
+                <button
+                  onClick={() => setShowReviewForm(true)}
+                  className="bg-[var(--accent)] text-white px-4 py-2 rounded-lg hover:bg-[var(--brown-600)] transition-colors font-semibold flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Write Review
+                </button>
+              )}
+            </div>
+
+            {/* Review Stats */}
+            {stats && stats.totalReviews > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 pb-8 border-b border-[var(--beige-300)]">
+                {/* Average Rating */}
+                <div className="text-center md:text-left">
+                  <div className="text-5xl font-bold text-[var(--brown-800)] mb-2">
+                    {stats.averageRating.toFixed(1)}
+                  </div>
+                  <div className="flex items-center justify-center md:justify-start gap-1 mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg
+                        key={star}
+                        className={`w-6 h-6 ${
+                          star <= Math.round(stats.averageRating)
+                            ? 'text-yellow-400 fill-current'
+                            : 'text-gray-300'
+                        }`}
+                        fill={star <= Math.round(stats.averageRating) ? 'currentColor' : 'none'}
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                        />
+                      </svg>
+                    ))}
+                  </div>
+                  <p className="text-gray-600">
+                    Based on {stats.totalReviews} review{stats.totalReviews !== 1 ? 's' : ''}
+                  </p>
+                  {stats.verifiedPurchaseCount > 0 && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      {stats.verifiedPurchaseCount} verified purchase{stats.verifiedPurchaseCount !== 1 ? 's' : ''}
+                    </p>
+                  )}
+                </div>
+
+                {/* Rating Breakdown */}
+                <div className="space-y-2">
+                  {[5, 4, 3, 2, 1].map((rating) => {
+                    const count = stats.ratingBreakdown[rating as 1 | 2 | 3 | 4 | 5] || 0;
+                    const percentage = stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0;
+                    return (
+                      <div key={rating} className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-[var(--brown-800)] w-12">
+                          {rating} star
+                        </span>
+                        <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
+                          <div
+                            className="bg-yellow-400 h-full transition-all duration-300"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-sm text-gray-600 w-12 text-right">{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Review Form */}
+            {showReviewForm && user && (
+              <div className="mb-8">
+                <ProductReviewForm
+                  productId={productId}
+                  productName={product.name}
+                  customerName={`${user.firstName} ${user.lastName}`}
+                  customerEmail={user.email}
+                  existingReview={editingReview}
+                  onSuccess={handleReviewSubmitSuccess}
+                  onCancel={() => {
+                    setShowReviewForm(false);
+                    setEditingReview(null);
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Sort Options */}
+            {reviews.length > 0 && (
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-gray-600">
+                  Showing {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+                </p>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-600">Sort by:</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="date">Most Recent</option>
+                    <option value="rating-high">Highest Rating</option>
+                    <option value="rating-low">Lowest Rating</option>
+                    <option value="helpful">Most Helpful</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Reviews List */}
+            {reviews.length > 0 ? (
+              <div className="space-y-6">
+                {reviews.map((review) => (
+                  <ProductReviewDisplay
+                    key={review.id}
+                    review={review}
+                    currentUserEmail={user?.email || ''}
+                    onEdit={handleEditReview}
+                    showProductName={false}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">No Reviews Yet</h3>
+                <p className="text-gray-600 mb-4">Be the first to review this product!</p>
+                {canWriteReview() && !showReviewForm && (
+                  <button
+                    onClick={() => setShowReviewForm(true)}
+                    className="bg-[var(--accent)] text-white px-6 py-2 rounded-lg hover:bg-[var(--brown-600)] transition-colors font-semibold"
+                  >
+                    Write the First Review
+                  </button>
+                )}
+                {!isAuthenticated && (
+                  <Link href="/login" className="text-[var(--accent)] hover:underline font-medium">
+                    Sign in to write a review
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Q&A Section */}
+          <div className="mt-12">
+            <ProductQA productId={productId} productName={product.name} />
           </div>
         </div>
       </main>
