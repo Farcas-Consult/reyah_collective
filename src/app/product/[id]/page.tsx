@@ -20,6 +20,7 @@ import ProductReviewDisplay from '@/components/ProductReviewDisplay';
 import ProductReviewForm from '@/components/ProductReviewForm';
 import ProductQA from '@/components/ProductQA';
 import { addToComparison, isInComparison, removeFromComparison } from '@/utils/comparison';
+import AddToWishlistButton from '@/components/AddToWishlistButton';
 import Link from 'next/link';
 
 // Sample product data - in a real app, this would come from an API/database
@@ -305,53 +306,65 @@ export default function ProductPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={product.stock === 0}
+                    className={`flex-1 py-3 px-6 rounded-md font-bold transition-colors ${
+                      addedToCart
+                        ? 'bg-green-600 text-white'
+                        : product.stock === 0
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-[var(--accent)] text-white hover:bg-[var(--brown-600)]'
+                    }`}
+                  >
+                    {addedToCart ? '✓ Added to Cart' : product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                  </button>
+                  <AddToWishlistButton
+                    productId={product.id}
+                    productName={product.name}
+                    productPrice={product.price}
+                    productSalePrice={product.originalPrice}
+                    productImage={product.images[0]}
+                    productCategory={product.category}
+                    variant="icon"
+                    size="lg"
+                  />
+                  <button
+                    onClick={handleToggleComparison}
+                    className={`py-3 px-6 rounded-md font-bold transition-colors border-2 ${
+                      inComparison
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-[var(--accent)] border-[var(--accent)] hover:bg-[var(--beige-50)]'
+                    }`}
+                    title={inComparison ? 'Remove from comparison' : 'Add to comparison'}
+                  >
+                    {inComparison ? '✓ In Comparison' : 'Compare'}
+                  </button>
+                </div>
+              
+                {inComparison && (
+                  <Link
+                    href="/compare"
+                    className="block text-center text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                  >
+                    View Comparison →
+                  </Link>
+                )}
+
                 <button
-                  onClick={handleAddToCart}
+                  onClick={handleBuyNow}
                   disabled={product.stock === 0}
-                  className={`flex-1 py-3 px-6 rounded-md font-bold transition-colors ${
-                    addedToCart
-                      ? 'bg-green-600 text-white'
-                      : product.stock === 0
+                  className={`w-full py-3 px-6 rounded-md font-bold transition-colors ${
+                    product.stock === 0
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-[var(--accent)] text-white hover:bg-[var(--brown-600)]'
+                      : 'bg-[var(--brown-800)] text-white hover:bg-[var(--brown-700)]'
                   }`}
                 >
-                  {addedToCart ? '✓ Added to Cart' : product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                </button>
-                <button
-                  onClick={handleToggleComparison}
-                  className={`py-3 px-6 rounded-md font-bold transition-colors border-2 ${
-                    inComparison
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-[var(--accent)] border-[var(--accent)] hover:bg-[var(--beige-50)]'
-                  }`}
-                  title={inComparison ? 'Remove from comparison' : 'Add to comparison'}
-                >
-                  {inComparison ? '✓ In Comparison' : 'Compare'}
+                  Buy Now
                 </button>
               </div>
-              
-              {inComparison && (
-                <Link
-                  href="/compare"
-                  className="block text-center text-sm text-blue-600 hover:text-blue-700 font-semibold"
-                >
-                  View Comparison →
-                </Link>
-              )}
-
-              <button
-                onClick={handleBuyNow}
-                disabled={product.stock === 0}
-                className={`flex-1 py-3 px-6 rounded-md font-bold transition-colors ${
-                  product.stock === 0
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-[var(--brown-800)] text-white hover:bg-[var(--brown-700)]'
-                }`}
-              >
-                Buy Now
-              </button>
 
               {/* Trust Badges */}
               <div className="grid grid-cols-3 gap-3 pt-4 border-t border-[var(--beige-300)]">
