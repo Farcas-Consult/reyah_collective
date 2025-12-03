@@ -3,30 +3,49 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
-import { useSearchParams } from 'next/navigation';
+import SearchBar from '@/components/SearchBar';
+import AdvancedFilters from '@/components/AdvancedFilters';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect, Suspense } from 'react';
 import { useCart } from '@/context/CartContext';
 import { calculateReviewStats } from '@/utils/productReviews';
 import { addToComparison, isInComparison, removeFromComparison } from '@/utils/comparison';
+import { searchAndFilterProducts, sortSearchResults, paginateResults, extractFilterOptions } from '@/utils/search';
+import AddToWishlistButton from '@/components/AddToWishlistButton';
 import Link from 'next/link';
 import StarRating from '@/components/StarRating';
+import type { SearchFilters, SortOption } from '@/types/search';
 
 function ShopContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const searchQuery = searchParams.get('search') || '';
   const categoryQuery = searchParams.get('category') || '';
   const { addToCart } = useCart();
   const [addedToCart, setAddedToCart] = useState<number | null>(null);
   const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [comparisonStates, setComparisonStates] = useState<{[key: number]: boolean}>({});
+  const [showFilters, setShowFilters] = useState(false);
   
-  const [selectedCategory, setSelectedCategory] = useState(categoryQuery);
-  const [selectedSeller, setSelectedSeller] = useState('');
+  // Advanced search state
+  const [filters, setFilters] = useState<SearchFilters>({
+    query: searchQuery,
+    category: categoryQuery || undefined,
+  });
+  const [sortBy, setSortBy] = useState<SortOption['value']>('relevance');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage] = useState(12);
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 40000]);
-  const [sellers, setSellers] = useState<string[]>([]);
-
-  const categories = ['All Products', 'Jewelry', 'Home Decor', 'Vintage', 'Art', 'Crafts', 'Eco-Friendly', 'Food', 'Clothing', 'Wellness', 'Kids', 'Books'];
+  const [paginatedProducts, setPaginatedProducts] = useState<any[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [filterOptions, setFilterOptions] = useState({
+    brands: [] as string[],
+    sellers: [] as string[],
+    categories: [] as string[],
+    tags: [] as string[],
+    priceRange: { min: 0, max: 50000 },
+  });
 
   // Load products from localStorage on mount
   useEffect(() => {
@@ -34,39 +53,39 @@ function ShopContent() {
       // Get admin products from localStorage
       const adminProducts = JSON.parse(localStorage.getItem('reyah_products') || '[]');
       const users = JSON.parse(localStorage.getItem('reyah_users') || '[]');
-      const reviews = JSON.parse(localStorage.getItem('reyah_reviews') || '[]');
+      const reviewsData = JSON.parse(localStorage.getItem('reyah_reviews') || '[]');
       
       // Default products if no admin products exist
       const defaultProducts = [
         // Handmade Jewelry
-        { id: 1, name: 'Handcrafted Silver Ring Set', price: 11999, category: 'Jewelry', brand: 'Artisan Metals', tags: ['silver', 'ring', 'handmade', 'jewelry'], image: '' },
-        { id: 2, name: 'Beaded Necklace with Pendant', price: 8645, category: 'Jewelry', brand: 'Artisan Metals', tags: ['beads', 'necklace', 'pendant', 'jewelry'], image: '' },
-        { id: 3, name: 'Custom Copper Earrings', price: 5717, category: 'Jewelry', brand: 'Copper Craft', tags: ['copper', 'earrings', 'custom', 'jewelry'], image: '' },
-        { id: 4, name: 'Leather Wrap Bracelet', price: 5120, category: 'Jewelry', brand: 'Leather Works', tags: ['leather', 'bracelet', 'wrap', 'jewelry'], image: '' },
+        { id: 1, name: 'Handcrafted Silver Ring Set', price: 11999, category: 'Jewelry', brand: 'Artisan Metals', tags: ['silver', 'ring', 'handmade', 'jewelry'], image: '', stock: 10 },
+        { id: 2, name: 'Beaded Necklace with Pendant', price: 8645, category: 'Jewelry', brand: 'Artisan Metals', tags: ['beads', 'necklace', 'pendant', 'jewelry'], image: '', stock: 15 },
+        { id: 3, name: 'Custom Copper Earrings', price: 5717, category: 'Jewelry', brand: 'Copper Craft', tags: ['copper', 'earrings', 'custom', 'jewelry'], image: '', stock: 8 },
+        { id: 4, name: 'Leather Wrap Bracelet', price: 5120, category: 'Jewelry', brand: 'Leather Works', tags: ['leather', 'bracelet', 'wrap', 'jewelry'], image: '', stock: 12 },
 
         // Artisan Home Decor
-        { id: 5, name: 'Custom Macrame Wall Hanging', price: 10639, category: 'Home Decor', brand: 'Knot & Weave', tags: ['macrame', 'wall hanging', 'decor', 'handmade'], image: '' },
-        { id: 6, name: 'Hand-Painted Ceramic Vase', price: 7314, category: 'Home Decor', brand: 'Pottery Studio', tags: ['ceramic', 'vase', 'painted', 'pottery'], image: '' },
-        { id: 7, name: 'Artisan Scented Candle Set', price: 5985, category: 'Home Decor', brand: 'Wax & Wick', tags: ['candles', 'scented', 'artisan', 'set'], image: '' },
-        { id: 8, name: 'Handwoven Throw Pillow', price: 4387, category: 'Home Decor', brand: 'Textile Art', tags: ['pillow', 'woven', 'throw', 'textile'], image: '' },
+        { id: 5, name: 'Custom Macrame Wall Hanging', price: 10639, category: 'Home Decor', brand: 'Knot & Weave', tags: ['macrame', 'wall hanging', 'decor', 'handmade'], image: '', stock: 5 },
+        { id: 6, name: 'Hand-Painted Ceramic Vase', price: 7314, category: 'Home Decor', brand: 'Pottery Studio', tags: ['ceramic', 'vase', 'painted', 'pottery'], image: '', stock: 7 },
+        { id: 7, name: 'Artisan Scented Candle Set', price: 5985, salePrice: 4788, category: 'Home Decor', brand: 'Wax & Wick', tags: ['candles', 'scented', 'artisan', 'set'], image: '', stock: 20 },
+        { id: 8, name: 'Handwoven Throw Pillow', price: 4387, category: 'Home Decor', brand: 'Textile Art', tags: ['pillow', 'woven', 'throw', 'textile'], image: '', stock: 14 },
 
         // Vintage & Antiques
-        { id: 9, name: 'Vintage Leather Journal', price: 6117, category: 'Vintage', brand: 'Vintage Finds', tags: ['vintage', 'leather', 'journal', 'notebook'], image: '' },
-        { id: 10, name: 'Antique Brass Candlestick', price: 9044, category: 'Vintage', brand: 'Antique Collection', tags: ['antique', 'brass', 'candlestick', 'vintage'], image: '' },
-        { id: 11, name: 'Vintage Ceramic Planter', price: 5717, category: 'Vintage', brand: 'Vintage Garden', tags: ['vintage', 'ceramic', 'planter', 'pot'], image: '' },
-        { id: 12, name: 'Retro Wooden Photo Frame', price: 3791, category: 'Vintage', brand: 'Retro Memories', tags: ['retro', 'wooden', 'frame', 'photo'], image: '' },
+        { id: 9, name: 'Vintage Leather Journal', price: 6117, category: 'Vintage', brand: 'Vintage Finds', tags: ['vintage', 'leather', 'journal', 'notebook'], image: '', stock: 6 },
+        { id: 10, name: 'Antique Brass Candlestick', price: 9044, category: 'Vintage', brand: 'Antique Collection', tags: ['antique', 'brass', 'candlestick', 'vintage'], image: '', stock: 3 },
+        { id: 11, name: 'Vintage Ceramic Planter', price: 5717, salePrice: 4574, category: 'Vintage', brand: 'Vintage Garden', tags: ['vintage', 'ceramic', 'planter', 'pot'], image: '', stock: 9 },
+        { id: 12, name: 'Retro Wooden Photo Frame', price: 3791, category: 'Vintage', brand: 'Retro Memories', tags: ['retro', 'wooden', 'frame', 'photo'], image: '', stock: 18 },
 
         // Eco-Friendly Products
-        { id: 21, name: 'Organic Beeswax Food Wraps', price: 3324, category: 'Eco-Friendly', brand: 'Green Living', tags: ['beeswax', 'food wrap', 'eco', 'zero waste'], image: '' },
-        { id: 22, name: 'Reusable Produce Bags (5 Pack)', price: 2526, category: 'Eco-Friendly', brand: 'Eco Essentials', tags: ['reusable', 'bags', 'produce', 'eco'], image: '' },
-        { id: 23, name: 'Handmade Natural Soap Set', price: 3856, category: 'Eco-Friendly', brand: 'Natural Bath', tags: ['soap', 'natural', 'handmade', 'organic'], image: '' },
-        { id: 24, name: 'Bamboo Cutlery Set', price: 2993, category: 'Eco-Friendly', brand: 'Bamboo Goods', tags: ['bamboo', 'cutlery', 'eco', 'sustainable'], image: '' },
+        { id: 21, name: 'Organic Beeswax Food Wraps', price: 3324, category: 'Eco-Friendly', brand: 'Green Living', tags: ['beeswax', 'food wrap', 'eco', 'zero waste'], image: '', stock: 25 },
+        { id: 22, name: 'Reusable Produce Bags (5 Pack)', price: 2526, salePrice: 2021, category: 'Eco-Friendly', brand: 'Eco Essentials', tags: ['reusable', 'bags', 'produce', 'eco'], image: '', stock: 30 },
+        { id: 23, name: 'Handmade Natural Soap Set', price: 3856, category: 'Eco-Friendly', brand: 'Natural Bath', tags: ['soap', 'natural', 'handmade', 'organic'], image: '', stock: 22 },
+        { id: 24, name: 'Bamboo Cutlery Set', price: 2993, category: 'Eco-Friendly', brand: 'Bamboo Goods', tags: ['bamboo', 'cutlery', 'eco', 'sustainable'], image: '', stock: 16 },
       ];
 
       // Merge admin products with default products, converting admin product structure
       const convertedAdminProducts = adminProducts.map((p: any) => {
         const seller = users.find((u: any) => u.id === p.sellerId);
-        const sellerReviews = reviews.filter((r: any) => r.sellerId === p.sellerId && !r.isSupplierReview);
+        const sellerReviews = reviewsData.filter((r: any) => r.sellerId === p.sellerId && !r.isSupplierReview);
         const sellerRating = sellerReviews.length > 0 
           ? sellerReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / sellerReviews.length 
           : 0;
@@ -75,9 +94,10 @@ function ShopContent() {
           id: p.id,
           name: p.name,
           price: p.price,
+          salePrice: p.salePrice,
           category: p.category,
-          brand: seller?.sellerName || 'Unknown Seller',
-          tags: [p.category.toLowerCase(), p.name.toLowerCase()],
+          brand: seller?.sellerName || p.brand || 'Unknown Seller',
+          tags: p.tags || [p.category.toLowerCase(), p.name.toLowerCase()],
           image: p.image || '',
           description: p.description || '',
           stock: p.stock || 0,
@@ -90,26 +110,61 @@ function ShopContent() {
 
       const combinedProducts = [...convertedAdminProducts, ...defaultProducts];
       setAllProducts(combinedProducts);
-      setFilteredProducts(combinedProducts);
+      setReviews(reviewsData);
       
-      // Extract unique sellers
-      const uniqueSellers = Array.from(new Set(
-        convertedAdminProducts
-          .filter((p: any) => p.sellerName)
-          .map((p: any) => p.sellerName)
-      )) as string[];
-      setSellers(uniqueSellers);
+      // Extract filter options
+      const options = extractFilterOptions(combinedProducts, reviewsData);
+      setFilterOptions(options);
     };
 
     loadProducts();
-    
-    // Initialize comparison states
+  }, []);
+
+  // Initialize comparison states when products load
+  useEffect(() => {
     const states: {[key: number]: boolean} = {};
     allProducts.forEach(p => {
       states[p.id] = isInComparison(p.id);
     });
     setComparisonStates(states);
-  }, []);
+  }, [allProducts]);
+
+  // Apply filters, search, and sorting
+  useEffect(() => {
+    // Search and filter products
+    const searchResults = searchAndFilterProducts(allProducts, filters, reviews);
+    
+    // Sort results
+    const sorted = sortSearchResults(searchResults, sortBy);
+    
+    setFilteredProducts(sorted);
+    
+    // Paginate results
+    const { items, pagination } = paginateResults(sorted, currentPage, perPage);
+    setPaginatedProducts(items);
+    setTotalPages(pagination.totalPages);
+  }, [filters, sortBy, allProducts, reviews, currentPage, perPage]);
+
+  const handleSearch = (query: string) => {
+    setFilters(prev => ({ ...prev, query }));
+    setCurrentPage(1);
+    router.push(`/shop?search=${encodeURIComponent(query)}`);
+  };
+
+  const handleFiltersChange = (newFilters: SearchFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (newSort: SortOption['value']) => {
+    setSortBy(newSort);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleAddToCart = (product: any) => {
     addToCart({
@@ -140,145 +195,103 @@ function ShopContent() {
     }
   };
 
-  useEffect(() => {
-    let results = allProducts;
+  const sortOptions: { label: string; value: SortOption['value'] }[] = [
+    { label: 'Relevance', value: 'relevance' },
+    { label: 'Price: Low to High', value: 'price-asc' },
+    { label: 'Price: High to Low', value: 'price-desc' },
+    { label: 'Top Rated', value: 'rating' },
+    { label: 'Newest', value: 'newest' },
+    { label: 'Most Popular', value: 'popular' },
+  ];
 
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      results = results.filter(product => 
-        product.name.toLowerCase().includes(query) ||
-        product.category.toLowerCase().includes(query) ||
-        product.brand.toLowerCase().includes(query) ||
-        product.tags.some((tag: string) => tag.toLowerCase().includes(query))
-      );
-    }
-
-    // Filter by category
-    if (selectedCategory && selectedCategory !== 'All Products') {
-      results = results.filter(product => product.category === selectedCategory);
-    }
-
-    // Filter by seller
-    if (selectedSeller) {
-      results = results.filter(product => product.sellerName === selectedSeller);
-    }
-
-    // Filter by price range
-    results = results.filter(product => 
-      product.price >= priceRange[0] && product.price <= priceRange[1]
-    );
-
-    setFilteredProducts(results);
-  }, [searchQuery, selectedCategory, selectedSeller, priceRange, allProducts]);
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-32 pb-12 px-6">
+      <main className="pt-32 pb-12 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
           <BackButton />
-          <div className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-[var(--brown-800)] mb-2">
-              {searchQuery ? `Search Results for "${searchQuery}"` : 'Shop All'}
+          
+          {/* Page Header */}
+          <div className="mb-6">
+            <h1 className="text-3xl md:text-4xl font-bold text-[var(--brown-800)] mb-2">
+              {filters.query ? `Search: "${filters.query}"` : 'Shop All Products'}
             </h1>
-            <p className="text-[var(--brown-700)] text-lg">
+            <p className="text-[var(--brown-700)]">
               {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} found
             </p>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-8">
-            {/* Filters Sidebar */}
-            <aside className="w-full md:w-64 flex-shrink-0">
-              <div className="bg-[var(--beige-50)] p-6 rounded-lg border border-[var(--beige-300)] sticky top-32">
-                <h3 className="font-bold text-[var(--brown-800)] mb-4 text-lg">Filters</h3>
-                
-                {/* Categories */}
-                <div className="mb-6">
-                  <h4 className="font-semibold text-[var(--brown-800)] mb-3 text-sm uppercase tracking-wide">Categories</h4>
-                  <ul className="space-y-2">
-                    {categories.map((category) => (
-                      <li key={category}>
-                        <button
-                          onClick={() => setSelectedCategory(category === 'All Products' ? '' : category)}
-                          className={`text-sm transition-colors w-full text-left px-3 py-1.5 rounded ${
-                            (category === 'All Products' && !selectedCategory) || selectedCategory === category
-                              ? 'bg-[var(--accent)] text-white font-medium'
-                              : 'text-[var(--brown-700)] hover:text-[var(--accent)] hover:bg-[var(--beige-200)]'
-                          }`}
-                        >
-                          {category}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+          {/* Search Bar */}
+          <div className="mb-6">
+            <SearchBar
+              initialQuery={filters.query}
+              onSearch={handleSearch}
+              products={allProducts}
+              showVoiceSearch={true}
+            />
+          </div>
 
-                {/* Sellers */}
-                {sellers.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-[var(--brown-800)] mb-3 text-sm uppercase tracking-wide">Sellers</h4>
-                    <ul className="space-y-2">
-                      <li>
-                        <button
-                          onClick={() => setSelectedSeller('')}
-                          className={`text-sm transition-colors w-full text-left px-3 py-1.5 rounded ${
-                            !selectedSeller
-                              ? 'bg-[var(--accent)] text-white font-medium'
-                              : 'text-[var(--brown-700)] hover:text-[var(--accent)] hover:bg-[var(--beige-200)]'
-                          }`}
-                        >
-                          All Sellers
-                        </button>
-                      </li>
-                      {sellers.map((seller) => (
-                        <li key={seller}>
-                          <button
-                            onClick={() => setSelectedSeller(seller)}
-                            className={`text-sm transition-colors w-full text-left px-3 py-1.5 rounded ${
-                              selectedSeller === seller
-                                ? 'bg-[var(--accent)] text-white font-medium'
-                                : 'text-[var(--brown-700)] hover:text-[var(--accent)] hover:bg-[var(--beige-200)]'
-                            }`}
-                          >
-                            {seller}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Mobile Filter Toggle */}
+            <div className="lg:hidden">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="w-full flex items-center justify-between bg-white border border-[var(--beige-300)] rounded-lg px-4 py-3 font-semibold text-[var(--brown-800)]"
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                  </svg>
+                  Filters
+                </span>
+                <svg
+                  className={`w-5 h-5 transition-transform ${showFilters ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
 
-                {/* Price Range */}
-                <div>
-                  <h4 className="font-semibold text-[var(--brown-800)] mb-3 text-sm uppercase tracking-wide">Price Range</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm text-[var(--brown-700)]">
-                      <span>KSH {priceRange[0].toLocaleString()}</span>
-                      <span>KSH {priceRange[1].toLocaleString()}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="40000"
-                      step="1000"
-                      value={priceRange[1]}
-                      onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
-                      className="w-full accent-[var(--accent)]"
-                    />
-                    <button
-                      onClick={() => setPriceRange([0, 40000])}
-                      className="text-xs text-[var(--accent)] hover:text-[var(--brown-600)] font-medium"
-                    >
-                      Reset Price
-                    </button>
-                  </div>
-                </div>
+            {/* Filters Sidebar - Desktop */}
+            <aside className={`w-full lg:w-64 flex-shrink-0 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+              <div className="sticky top-32">
+                <AdvancedFilters
+                  filters={filters}
+                  onFiltersChange={handleFiltersChange}
+                  filterOptions={filterOptions}
+                />
               </div>
             </aside>
 
-            {/* Products Grid */}
-            <div className="flex-1">
-              {filteredProducts.length === 0 ? (
+            {/* Products Section */}
+            <div className="flex-1 min-w-0">
+              {/* Sort and View Options */}
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-[var(--beige-300)]">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-[var(--brown-800)]">Sort by:</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => handleSortChange(e.target.value as SortOption['value'])}
+                    className="border border-[var(--beige-300)] rounded px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-[var(--accent)]"
+                  >
+                    {sortOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="text-sm text-[var(--brown-700)]">
+                  Page {currentPage} of {totalPages}
+                </div>
+              </div>
+
+              {/* Products Grid */}
+              {paginatedProducts.length === 0 ? (
                 <div className="text-center py-16">
                   <svg className="w-24 h-24 mx-auto text-[var(--beige-300)] mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -287,9 +300,9 @@ function ShopContent() {
                   <p className="text-[var(--brown-700)] mb-6">Try adjusting your search or filters</p>
                   <button
                     onClick={() => {
-                      setSelectedCategory('');
-                      setPriceRange([0, 40000]);
-                      window.history.pushState({}, '', '/shop');
+                      setFilters({ query: '' });
+                      setSortBy('relevance');
+                      setCurrentPage(1);
                     }}
                     className="bg-[var(--accent)] text-white px-6 py-2 rounded-md hover:bg-[var(--brown-600)] transition-colors font-medium"
                   >
@@ -297,8 +310,9 @@ function ShopContent() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredProducts.map((product) => (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {paginatedProducts.map((product) => (
                     <div key={product.id} className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-[var(--beige-300)]">
                       <Link href={`/product/${product.id}`} className="relative block aspect-square bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] overflow-hidden">
                         {product.image ? (
@@ -371,6 +385,15 @@ function ShopContent() {
                         <div className="flex items-center justify-between pt-2">
                           <p className="text-lg text-[var(--brown-800)] font-bold">KSH {product.price.toLocaleString()}</p>
                           <div className="flex gap-2">
+                            <AddToWishlistButton
+                              productId={product.id}
+                              productName={product.name}
+                              productPrice={product.price}
+                              productImage={product.image || ''}
+                              productCategory={product.category}
+                              variant="icon"
+                              size="sm"
+                            />
                             <button 
                               onClick={() => handleToggleComparison(product.id)}
                               className={`p-1.5 rounded-md text-sm transition-colors ${
@@ -400,6 +423,84 @@ function ShopContent() {
                     </div>
                   ))}
                 </div>
+
+                {/* Pagination Controls */}
+                {paginatedProducts.length > 0 && totalPages > 1 && (
+                  <div className="mt-8 flex items-center justify-between">
+                    <div className="text-sm text-gray-600">
+                      Showing {((currentPage - 1) * perPage) + 1} to {Math.min(currentPage * perPage, filteredProducts.length)} of {filteredProducts.length} products
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {/* Previous Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          currentPage === 1
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-white border border-[var(--beige-300)] text-[var(--accent)] hover:bg-[var(--beige-50)]'
+                        }`}
+                      >
+                        Previous
+                      </button>
+
+                      {/* Page Numbers */}
+                      <div className="hidden sm:flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                          // Show first page, last page, current page, and pages around current
+                          const showPage = 
+                            page === 1 || 
+                            page === totalPages || 
+                            (page >= currentPage - 1 && page <= currentPage + 1);
+                          
+                          const showEllipsis = 
+                            (page === currentPage - 2 && currentPage > 3) ||
+                            (page === currentPage + 2 && currentPage < totalPages - 2);
+
+                          if (showEllipsis) {
+                            return <span key={page} className="px-2 text-gray-400">...</span>;
+                          }
+
+                          if (!showPage) return null;
+
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => handlePageChange(page)}
+                              className={`min-w-[40px] px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                currentPage === page
+                                  ? 'bg-[var(--accent)] text-white'
+                                  : 'bg-white border border-[var(--beige-300)] text-[var(--accent)] hover:bg-[var(--beige-50)]'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Mobile: Current Page Indicator */}
+                      <div className="sm:hidden px-4 py-2 bg-white border border-[var(--beige-300)] rounded-md text-sm font-medium text-[var(--accent)]">
+                        {currentPage} / {totalPages}
+                      </div>
+
+                      {/* Next Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                          currentPage === totalPages
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-white border border-[var(--beige-300)] text-[var(--accent)] hover:bg-[var(--beige-50)]'
+                        }`}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
             </div>
           </div>

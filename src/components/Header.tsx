@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { Message } from '@/types/message';
+import SearchBar from '@/components/SearchBar';
 
 export default function Header() {
-  const [searchQuery, setSearchQuery] = useState('');
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
   const router = useRouter();
   const { cartCount } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
@@ -24,12 +25,40 @@ export default function Header() {
     }
   }, [isAuthenticated, user]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
+  const handleSearch = (query: string) => {
+    if (query.trim()) {
+      router.push(`/shop?search=${encodeURIComponent(query.trim())}`);
     }
   };
+
+  // Load products for search suggestions
+  useEffect(() => {
+    const loadProducts = () => {
+      const adminProducts = JSON.parse(localStorage.getItem('reyah_products') || '[]');
+      const users = JSON.parse(localStorage.getItem('reyah_users') || '[]');
+      
+      const defaultProducts = [
+        { id: 1, name: 'Handwoven Basket', category: 'Home Decor', price: 2500, image: '/images/basket.jpg', sellerName: 'Artisan Weaves', sellerRating: 4.8 },
+        { id: 2, name: 'Beaded Necklace', category: 'Jewelry', price: 1500, image: '/images/necklace.jpg', sellerName: 'Bead Craft Co.', sellerRating: 4.5 },
+        { id: 3, name: 'Maasai Shuka', category: 'Clothing', price: 3500, image: '/images/shuka.jpg', sellerName: 'Traditional Fabrics', sellerRating: 4.9 },
+      ];
+
+      const sellerProducts = users
+        .filter((user: any) => user.role === 'seller' && user.products)
+        .flatMap((seller: any) => 
+          seller.products.map((product: any) => ({
+            ...product,
+            sellerName: seller.businessName || `${seller.firstName} ${seller.lastName}`,
+            sellerRating: seller.rating || 0
+          }))
+        );
+
+      const combinedProducts = adminProducts.length > 0 ? adminProducts : [...defaultProducts, ...sellerProducts];
+      setAllProducts(combinedProducts);
+    };
+
+    loadProducts();
+  }, []);
 
   const handleAccountClick = () => {
     if (isAuthenticated) {
@@ -80,21 +109,12 @@ export default function Header() {
 
             {/* Search Bar */}
             <div className="flex-1 max-w-2xl">
-              <form onSubmit={handleSearch} className="relative flex">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search products, brands and categories"
-                  className="flex-1 px-4 py-2.5 border-2 border-[var(--beige-300)] focus:outline-none focus:border-[var(--accent)] text-sm bg-white text-[var(--brown-800)] placeholder:text-gray-400"
-                />
-                <button
-                  type="submit"
-                  className="px-6 bg-[var(--accent)] hover:bg-[var(--brown-600)] text-white font-medium transition-colors uppercase text-sm"
-                >
-                  SEARCH
-                </button>
-              </form>
+              <SearchBar
+                initialQuery=""
+                onSearch={handleSearch}
+                products={allProducts}
+                showVoiceSearch={true}
+              />
             </div>
 
             {/* Right Actions */}
@@ -229,6 +249,13 @@ export default function Header() {
                         className="block px-4 py-2 text-[var(--brown-800)] hover:bg-[var(--beige-100)] transition-colors flex items-center gap-2"
                       >
                         <span>⭐ Rewards</span>
+                      </Link>
+                      <Link 
+                        href="/account/wishlists"
+                        onClick={() => setShowAccountMenu(false)}
+                        className="block px-4 py-2 text-[var(--brown-800)] hover:bg-[var(--beige-100)] transition-colors flex items-center gap-2"
+                      >
+                        <span>❤️ My Wishlists</span>
                       </Link>
                       <Link 
                         href="/messages"
