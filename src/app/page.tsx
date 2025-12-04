@@ -2,6 +2,7 @@
 
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import ActiveDeals from '@/components/ActiveDeals';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
@@ -376,6 +377,9 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Active Flash Deals Section */}
+        <ActiveDeals />
 
         {/* Categories Grid */}
         <section className="py-6 bg-white border-b border-[var(--beige-300)]">

@@ -4,12 +4,43 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
+import SavedCarts from '@/components/SavedCarts';
 
 export default function CartPage() {
-  const { cartItems, updateQuantity, removeItem, cartCount } = useCart();  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const { cartItems, updateQuantity, removeItem, cartCount, saveCurrentCart, getSavedCartsList } = useCart();
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSavedCarts, setShowSavedCarts] = useState(false);
+  const [cartName, setCartName] = useState('');
+  const [cartNotes, setCartNotes] = useState('');
+  const [saveMessage, setSaveMessage] = useState('');
+  const [savedCartsCount, setSavedCartsCount] = useState(0);
+
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shippingCost = subtotal > 5000 ? 0 : 500;
   const total = subtotal + shippingCost;
+
+  // Load saved carts count on mount (client-side only)
+  useEffect(() => {
+    setSavedCartsCount(getSavedCartsList().length);
+  }, [getSavedCartsList]);
+
+  const handleSaveCart = () => {
+    if (cartItems.length === 0) {
+      alert('Your cart is empty!');
+      return;
+    }
+    const saved = saveCurrentCart(cartName || undefined, cartNotes || undefined);
+    setSaveMessage('Cart saved successfully!');
+    setSavedCartsCount(getSavedCartsList().length); // Update count after saving
+    setCartName('');
+    setCartNotes('');
+    setTimeout(() => {
+      setShowSaveModal(false);
+      setSaveMessage('');
+    }, 2000);
+  };
 
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
@@ -19,11 +50,44 @@ export default function CartPage() {
           <BackButton />
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-[var(--brown-800)] mb-2">Shopping Cart</h1>
-            <p className="text-[var(--brown-700)]">
-              {cartCount} {cartCount === 1 ? 'item' : 'items'} in your cart
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-[var(--brown-800)] mb-2">Shopping Cart</h1>
+                <p className="text-[var(--brown-700)]">
+                  {cartCount} {cartCount === 1 ? 'item' : 'items'} in your cart
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowSavedCarts(!showSavedCarts)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border-2 border-[var(--beige-300)] text-[var(--brown-800)] rounded-md hover:border-[var(--accent)] transition-colors font-medium"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  <span>Saved Carts {savedCartsCount > 0 && `(${savedCartsCount})`}</span>
+                </button>
+                {cartItems.length > 0 && (
+                  <button
+                    onClick={() => setShowSaveModal(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--brown-600)] transition-colors font-medium"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    <span>Save Cart</span>
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
+
+          {/* Saved Carts Section */}
+          {showSavedCarts && (
+            <div className="mb-8">
+              <SavedCarts />
+            </div>
+          )}
 
           {cartItems.length === 0 ? (
             /* Empty Cart */
@@ -235,6 +299,95 @@ export default function CartPage() {
           )}
         </div>
       </main>
+
+      {/* Save Cart Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-[var(--brown-800)]">Save Cart</h2>
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {saveMessage ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-lg font-semibold text-green-600">{saveMessage}</p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-[var(--brown-800)] mb-2">
+                    Cart Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={cartName}
+                    onChange={(e) => setCartName(e.target.value)}
+                    placeholder="e.g., Birthday Gifts"
+                    className="w-full px-4 py-2 border border-[var(--beige-300)] rounded-md focus:outline-none focus:border-[var(--accent)]"
+                  />
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-[var(--brown-800)] mb-2">
+                    Notes (Optional)
+                  </label>
+                  <textarea
+                    value={cartNotes}
+                    onChange={(e) => setCartNotes(e.target.value)}
+                    placeholder="Add any notes about this cart..."
+                    rows={3}
+                    className="w-full px-4 py-2 border border-[var(--beige-300)] rounded-md focus:outline-none focus:border-[var(--accent)] resize-none"
+                  />
+                </div>
+
+                <div className="bg-[var(--beige-50)] rounded-lg p-4 mb-6">
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="text-[var(--brown-700)]">Items</span>
+                    <span className="font-semibold text-[var(--brown-800)]">{cartCount}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-[var(--brown-700)]">Total Value</span>
+                    <span className="font-semibold text-[var(--brown-800)]">KSH {subtotal.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowSaveModal(false)}
+                    className="flex-1 px-4 py-2 border-2 border-[var(--beige-300)] text-[var(--brown-800)] rounded-md hover:border-[var(--accent)] transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveCart}
+                    className="flex-1 px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:bg-[var(--brown-600)] transition-colors font-medium"
+                  >
+                    Save Cart
+                  </button>
+                </div>
+
+                <p className="text-xs text-gray-500 mt-4 text-center">
+                  Saved carts expire after 30 days
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );

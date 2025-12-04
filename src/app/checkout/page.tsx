@@ -11,6 +11,9 @@ import Link from 'next/link';
 import { saveOrder, generateOrderNumber, generateTrackingNumber, sendOrderConfirmationEmail } from '@/utils/orders';
 import { awardPurchasePoints, getActiveRedeemedRewards, validateRewardCode, markRewardAsUsed } from '@/utils/loyalty';
 import { RedeemedReward } from '@/types/loyalty';
+import ShippingOptions from '@/components/ShippingOptions';
+import { getShippingQuotes, createShipment } from '@/utils/shippingUtils';
+import type { ShippingQuote } from '@/types/shipping';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -32,6 +35,8 @@ export default function CheckoutPage() {
   const [selectedRewardCode, setSelectedRewardCode] = useState('');
   const [rewardDiscount, setRewardDiscount] = useState(0);
   const [freeShipping, setFreeShipping] = useState(false);
+  const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<string>('');
+  const [selectedShippingQuote, setSelectedShippingQuote] = useState<ShippingQuote | null>(null);
 
   const [formData, setFormData] = useState({
     // Contact Information
@@ -57,7 +62,13 @@ export default function CheckoutPage() {
   });
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const baseShippingCost = subtotal > 5000 ? 0 : 500;
+  const totalWeight = cartItems.reduce((sum, item) => sum + (item.quantity * 0.5), 0); // Estimate 0.5kg per item
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  
+  // Use selected shipping quote cost or fallback to old logic
+  const baseShippingCost = selectedShippingQuote 
+    ? selectedShippingQuote.cost 
+    : (subtotal > 5000 ? 0 : 500);
   const shippingCost = freeShipping ? 0 : baseShippingCost;
   const discountedSubtotal = Math.max(0, subtotal - rewardDiscount);
   const total = discountedSubtotal + shippingCost;
@@ -101,6 +112,11 @@ export default function CheckoutPage() {
     setFreeShipping(false);
   };
 
+  const handleSelectShippingMethod = (methodId: string, quote: ShippingQuote) => {
+    setSelectedShippingMethodId(methodId);
+    setSelectedShippingQuote(quote);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
@@ -110,7 +126,10 @@ export default function CheckoutPage() {
       const newOrderNumber = generateOrderNumber();
       const trackingNum = generateTrackingNumber();
       const estimatedDelivery = new Date();
-      estimatedDelivery.setDate(estimatedDelivery.getDate() + 5); // 5 days from now
+      
+      // Calculate estimated delivery based on shipping method
+      const deliveryDays = selectedShippingQuote?.estimatedDays.max || 5;
+      estimatedDelivery.setDate(estimatedDelivery.getDate() + deliveryDays);
 
       const order = {
         id: Date.now().toString(),
@@ -155,6 +174,24 @@ export default function CheckoutPage() {
 
       // Save order to localStorage
       saveOrder(order);
+
+      // Create shipment if shipping method was selected
+      if (selectedShippingMethodId && selectedShippingQuote) {
+        try {
+          const recipientName = `${formData.firstName} ${formData.lastName}`;
+          const recipientAddress = `${formData.address}, ${formData.city}, ${formData.county}`;
+
+          createShipment(
+            order.id,
+            selectedShippingMethodId,
+            recipientName,
+            recipientAddress
+          );
+        } catch (shipmentError) {
+          console.error('Error creating shipment:', shipmentError);
+          // Continue with order even if shipment creation fails
+        }
+      }
 
       // Send confirmation email
       await sendOrderConfirmationEmail(order);
@@ -383,6 +420,20 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {/* Shipping Options */}
+              <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] p-6">
+                <h2 className="text-xl font-bold text-[var(--brown-800)] mb-4">Shipping Method</h2>
+                <ShippingOptions
+                  countryCode="KE"
+                  orderValue={subtotal}
+                  weight={totalWeight}
+                  itemCount={totalItems}
+                  selectedMethodId={selectedShippingMethodId}
+                  onSelectMethod={handleSelectShippingMethod}
+                  showDetails={true}
+                />
+              </div>
+
               {/* Payment Method */}
               <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] p-6">
                 <h2 className="text-xl font-bold text-[var(--brown-800)] mb-4">Payment Method</h2>
@@ -572,6 +623,14 @@ export default function CheckoutPage() {
                       )}
                     </span>
                   </div>
+                  {selectedShippingQuote && (
+                    <div className="text-xs text-gray-600 -mt-2 ml-0">
+                      <p>{selectedShippingQuote.methodName} • {selectedShippingQuote.carrier.toUpperCase()}</p>
+                      <p className="text-gray-500">
+                        Delivery: {selectedShippingQuote.estimatedDays.min}-{selectedShippingQuote.estimatedDays.max} days
+                      </p>
+                    </div>
+                  )}
                   <div className="border-t border-[var(--beige-300)] pt-3">
                     <div className="flex justify-between items-baseline">
                       <span className="text-lg font-bold text-[var(--brown-800)]">Total</span>

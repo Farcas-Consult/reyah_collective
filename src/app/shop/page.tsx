@@ -14,7 +14,13 @@ import { searchAndFilterProducts, sortSearchResults, paginateResults, extractFil
 import AddToWishlistButton from '@/components/AddToWishlistButton';
 import Link from 'next/link';
 import StarRating from '@/components/StarRating';
+import FlashSaleBadge from '@/components/FlashSaleBadge';
+import WholesaleBadge from '@/components/WholesaleBadge';
+import { updateSaleStatuses, getProductSale, calculateSalePrice } from '@/utils/flashSaleUtils';
+import { getProductPricingRules } from '@/utils/wholesaleUtils';
 import type { SearchFilters, SortOption } from '@/types/search';
+import type { FlashSale } from '@/types/flashSale';
+import type { BulkPricingRule } from '@/types/wholesale';
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -26,6 +32,8 @@ function ShopContent() {
   const [allProducts, setAllProducts] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [comparisonStates, setComparisonStates] = useState<{[key: number]: boolean}>({});
+  const [productSales, setProductSales] = useState<{[key: number]: { sale: FlashSale; salePrice: number } | null}>({});
+  const [productPricingRules, setProductPricingRules] = useState<{[key: number]: BulkPricingRule | null}>({});
   const [showFilters, setShowFilters] = useState(false);
   
   // Advanced search state
@@ -129,6 +137,57 @@ function ShopContent() {
     setComparisonStates(states);
   }, [allProducts]);
 
+  // Load flash sales and calculate sale prices
+  useEffect(() => {
+    updateSaleStatuses();
+    
+    const salesMap: {[key: number]: { sale: FlashSale; salePrice: number } | null} = {};
+    const rulesMap: {[key: number]: BulkPricingRule | null} = {};
+    
+    allProducts.forEach(product => {
+      const sale = getProductSale(product.id);
+      if (sale) {
+        const salePrice = calculateSalePrice(product.price, sale);
+        salesMap[product.id] = { sale, salePrice };
+      } else {
+        salesMap[product.id] = null;
+      }
+      
+      const rules = getProductPricingRules(product.id);
+      const rule = rules.length > 0 ? rules[0] : null; // Use first active rule
+      rulesMap[product.id] = rule;
+    });
+    
+    setProductSales(salesMap);
+    setProductPricingRules(rulesMap);
+    
+    // Refresh sale statuses every minute
+    const interval = setInterval(() => {
+      updateSaleStatuses();
+      const updatedSalesMap: {[key: number]: { sale: FlashSale; salePrice: number } | null} = {};
+      const updatedRulesMap: {[key: number]: BulkPricingRule | null} = {};
+      
+      allProducts.forEach(product => {
+        const sale = getProductSale(product.id);
+        if (sale) {
+          const salePrice = calculateSalePrice(product.price, sale);
+          updatedSalesMap[product.id] = { sale, salePrice };
+        } else {
+          updatedSalesMap[product.id] = null;
+        }
+        
+        const rules = getProductPricingRules(product.id);
+        const rule = rules.length > 0 ? rules[0] : null; // Use first active rule
+        updatedRulesMap[product.id] = rule;
+      });
+      
+      setProductSales(updatedSalesMap);
+      setProductPricingRules(updatedRulesMap);
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, [allProducts]);
+
   // Apply filters, search, and sorting
   useEffect(() => {
     // Search and filter products
@@ -167,10 +226,13 @@ function ShopContent() {
   };
 
   const handleAddToCart = (product: any) => {
+    const saleInfo = productSales[product.id];
+    const priceToUse = saleInfo ? saleInfo.salePrice : product.price;
+    
     addToCart({
       id: product.id,
       name: product.name,
-      price: product.price,
+      price: priceToUse,
       image: product.image || product.category.substring(0, 2).toUpperCase(),
       category: product.category,
       inStock: product.stock > 0 || true
@@ -312,7 +374,11 @@ function ShopContent() {
               ) : (
                 <>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {paginatedProducts.map((product) => (
+                    {paginatedProducts.map((product) => {
+                      const saleInfo = productSales[product.id];
+                      const pricingRule = productPricingRules[product.id];
+                      
+                      return (
                     <div key={product.id} className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-[var(--beige-300)]">
                       <Link href={`/product/${product.id}`} className="relative block aspect-square bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] overflow-hidden">
                         {product.image ? (
@@ -324,6 +390,19 @@ function ShopContent() {
                         ) : (
                           <div className="absolute inset-0 flex items-center justify-center text-[var(--brown-700)] text-sm p-4 text-center font-medium">
                             {product.name}
+                          </div>
+                        )}
+                        {saleInfo && (
+                          <FlashSaleBadge
+                            sale={saleInfo.sale}
+                            originalPrice={product.price}
+                            size="md"
+                            position="top-right"
+                          />
+                        )}
+                        {!saleInfo && pricingRule && (
+                          <div className="absolute top-4 left-4">
+                            <WholesaleBadge size="sm" />
                           </div>
                         )}
                         <div className="absolute inset-0 bg-[var(--accent)] opacity-0 group-hover:opacity-10 transition-opacity" />
@@ -383,7 +462,19 @@ function ShopContent() {
                         })()}
                         
                         <div className="flex items-center justify-between pt-2">
-                          <p className="text-lg text-[var(--brown-800)] font-bold">KSH {product.price.toLocaleString()}</p>
+                          {saleInfo ? (
+                            <div className="flex flex-col gap-0.5">
+                              <p className="text-lg text-red-600 font-bold">KSH {saleInfo.salePrice.toLocaleString()}</p>
+                              <p className="text-sm text-gray-500 line-through">KSH {product.price.toLocaleString()}</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-0.5">
+                              <p className="text-lg text-[var(--brown-800)] font-bold">KSH {product.price.toLocaleString()}</p>
+                              {pricingRule && (
+                                <p className="text-xs text-blue-600 font-semibold">Bulk pricing available</p>
+                              )}
+                            </div>
+                          )}
                           <div className="flex gap-2">
                             <AddToWishlistButton
                               productId={product.id}
@@ -421,7 +512,8 @@ function ShopContent() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
 
                 {/* Pagination Controls */}
