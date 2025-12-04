@@ -21,6 +21,13 @@ import ProductReviewForm from '@/components/ProductReviewForm';
 import ProductQA from '@/components/ProductQA';
 import { addToComparison, isInComparison, removeFromComparison } from '@/utils/comparison';
 import AddToWishlistButton from '@/components/AddToWishlistButton';
+import { getProductSale, calculateSalePrice, updateSaleStatuses } from '@/utils/flashSaleUtils';
+import FlashSaleBadge from '@/components/FlashSaleBadge';
+import CountdownTimer from '@/components/CountdownTimer';
+import BulkPricingDisplay from '@/components/BulkPricingDisplay';
+import WholesaleBadge from '@/components/WholesaleBadge';
+import { getProductPricingRules, calculateTieredPrice, isWholesaleCustomer } from '@/utils/wholesaleUtils';
+import type { BulkPricingRule } from '@/types/wholesale';
 import Link from 'next/link';
 
 // Sample product data - in a real app, this would come from an API/database
@@ -49,6 +56,11 @@ export default function ProductPage() {
   const [sortBy, setSortBy] = useState<'date' | 'rating-high' | 'rating-low' | 'helpful'>('date');
   const [editingReview, setEditingReview] = useState<ProductReview | null>(null);
   const [inComparison, setInComparison] = useState(false);
+  const [flashSale, setFlashSale] = useState<any>(null);
+  const [salePrice, setSalePrice] = useState<number | null>(null);
+  const [pricingRule, setPricingRule] = useState<BulkPricingRule | null>(null);
+  const [isWholesale, setIsWholesale] = useState(false);
+  const [tieredPrice, setTieredPrice] = useState<number | null>(null);
 
   const productId = parseInt(params.id as string);
   const product = allProducts.find(p => p.id === productId);
@@ -57,8 +69,34 @@ export default function ProductPage() {
     if (product) {
       loadReviews();
       setInComparison(isInComparison(product.id));
+      
+      // Check for flash sales
+      updateSaleStatuses();
+      const sale = getProductSale(product.id);
+      setFlashSale(sale);
+      if (sale) {
+        const discountedPrice = calculateSalePrice(product.price, sale);
+        setSalePrice(discountedPrice);
+      } else {
+        setSalePrice(null);
+      }
+      
+      // Check for wholesale pricing
+      const wholesaleStatus = user?.id ? isWholesaleCustomer(user.id) : false;
+      setIsWholesale(wholesaleStatus);
+      
+      const rules = getProductPricingRules(product.id);
+      const rule = rules.length > 0 ? rules[0] : null; // Use first active rule
+      setPricingRule(rule);
+      
+      if (rule && wholesaleStatus) {
+        const result = calculateTieredPrice(product.price, quantity, product.id, true);
+        setTieredPrice(result.unitPrice);
+      } else {
+        setTieredPrice(null);
+      }
     }
-  }, [product, sortBy]);
+  }, [product, sortBy, quantity]);
 
   const loadReviews = () => {
     const productReviews = getProductReviews(productId, 'approved');
@@ -119,11 +157,14 @@ export default function ProductPage() {
   }
 
   const handleAddToCart = () => {
+    // Priority: Tiered price > Sale price > Regular price
+    const priceToUse = tieredPrice !== null ? tieredPrice : (salePrice !== null ? salePrice : product.price);
+    
     for (let i = 0; i < quantity; i++) {
       addToCart({
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: priceToUse,
         image: product.images[0],
         category: product.category,
         inStock: product.stock > 0
@@ -197,7 +238,19 @@ export default function ProductPage() {
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="text-6xl font-bold text-[var(--brown-600)]">{product.images[selectedImage]}</span>
                 </div>
-                {product.originalPrice && (
+                
+                {/* Flash Sale Badge */}
+                {flashSale && (
+                  <FlashSaleBadge 
+                    sale={flashSale} 
+                    originalPrice={product.price}
+                    size="lg"
+                    position="top-right"
+                  />
+                )}
+                
+                {/* Regular Discount Badge (only if no flash sale) */}
+                {!flashSale && product.originalPrice && (
                   <div className="absolute top-4 left-4 bg-[var(--accent)] text-white px-3 py-1.5 rounded-md text-sm font-bold">
                     -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
                   </div>
@@ -215,6 +268,9 @@ export default function ProductPage() {
                   ) : (
                     <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-semibold">Out of Stock</span>
                   )}
+                  {pricingRule && (
+                    <WholesaleBadge size="sm" />
+                  )}
                 </div>
                 <h1 className="text-3xl md:text-4xl font-bold text-[var(--brown-800)] mb-4">{product.name}</h1>
                 
@@ -231,18 +287,79 @@ export default function ProductPage() {
 
                 {/* Price */}
                 <div className="bg-[var(--beige-50)] p-4 rounded-lg mb-6">
+                  {/* Flash Sale Countdown */}
+                  {flashSale && (
+                    <div className="mb-4 pb-4 border-b border-[var(--beige-300)]">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-red-600 font-bold">
+                          {flashSale.type === 'flash_sale' ? '⚡ FLASH SALE' : flashSale.type === 'daily_deal' ? '🎯 DAILY DEAL' : '🔥 LIMITED OFFER'}
+                        </span>
+                      </div>
+                      <CountdownTimer 
+                        endDate={flashSale.endDate}
+                        size="sm"
+                        showLabel={true}
+                      />
+                    </div>
+                  )}
+                  
                   <div className="flex items-baseline gap-3">
-                    <span className="text-3xl md:text-4xl font-bold text-[var(--accent)]">
-                      KSH {product.price.toLocaleString()}
-                    </span>
-                    {product.originalPrice && (
-                      <span className="text-lg text-gray-500 line-through">
-                        KSH {product.originalPrice.toLocaleString()}
-                      </span>
+                    {tieredPrice !== null && pricingRule ? (
+                      <>
+                        <span className="text-3xl md:text-4xl font-bold text-blue-600">
+                          KSH {tieredPrice.toLocaleString()}
+                        </span>
+                        <span className="text-lg text-gray-500 line-through">
+                          KSH {product.price.toLocaleString()}
+                        </span>
+                        <span className="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded font-semibold">
+                          Bulk Price
+                        </span>
+                      </>
+                    ) : flashSale && salePrice !== null ? (
+                      <>
+                        <span className="text-3xl md:text-4xl font-bold text-red-600">
+                          KSH {salePrice.toLocaleString()}
+                        </span>
+                        <span className="text-lg text-gray-500 line-through">
+                          KSH {product.price.toLocaleString()}
+                        </span>
+                        <span className="text-sm bg-red-100 text-red-700 px-2 py-1 rounded font-semibold">
+                          Save KSH {(product.price - salePrice).toLocaleString()}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-3xl md:text-4xl font-bold text-[var(--accent)]">
+                          KSH {product.price.toLocaleString()}
+                        </span>
+                        {product.originalPrice && (
+                          <span className="text-lg text-gray-500 line-through">
+                            KSH {product.originalPrice.toLocaleString()}
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
               </div>
+
+              {/* Bulk Pricing Display */}
+              {pricingRule && (
+                <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                  <BulkPricingDisplay
+                    productId={product.id}
+                    basePrice={product.price}
+                    tiers={pricingRule.tiers.map((tier, idx) => ({
+                      ...tier,
+                      id: `${pricingRule.id}_tier_${idx}`,
+                      productId: product.id
+                    }))}
+                    currentQuantity={quantity}
+                    isWholesale={isWholesale}
+                  />
+                </div>
+              )}
 
               {/* Seller Info */}
               <div className="border border-[var(--beige-300)] rounded-lg p-4 bg-white">

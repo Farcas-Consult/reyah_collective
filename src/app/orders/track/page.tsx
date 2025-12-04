@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import TrackingDisplay from '@/components/TrackingDisplay';
 import { 
   getOrderById, 
   getOrdersByEmail, 
@@ -207,7 +208,15 @@ export default function TrackOrderPage() {
       </div>
 
       {/* Tracking Information */}
-      {order.trackingInfo && (
+      {order.trackingNumber && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-4">Shipment Tracking</h3>
+          <TrackingDisplay trackingNumber={order.trackingNumber} showFullDetails={true} />
+        </div>
+      )}
+
+      {/* Fallback for old tracking info structure */}
+      {!order.trackingNumber && order.trackingInfo && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <h3 className="font-semibold text-blue-900 mb-3">Tracking Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
