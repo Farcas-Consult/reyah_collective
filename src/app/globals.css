@@ -1,16 +1,37 @@
 @import "tailwindcss";
 :root {
-    --background: #F5F5DC;
-    --foreground: #3E2723;
-    --beige-50: #FAF8F3;
-    --beige-100: #F5F5DC;
-    --beige-200: #E8E4D9;
-    --beige-300: #D4CFC0;
-    --beige-400: #C0B8A3;
-    --brown-800: #3E2723;
-    --brown-700: #4E342E;
-    --brown-600: #5D4037;
-    --accent: #8B7355;
+    /* Professional Color Theme */
+    --emerald-green: #0E7A53;
+    --navy: #4D4D4D;
+    --off-white: #FEFEFC;
+    /* Background and foreground */
+    --background: #FEFEFC;
+    --foreground: #4D4D4D;
+    /* Beige tones replaced with neutral grays and off-whites */
+    --beige-50: #FEFEFC;
+    --beige-100: #F8F8F6;
+    --beige-200: #E8E8E6;
+    --beige-300: #D4D4D2;
+    --beige-400: #B8B8B6;
+    /* Brown tones replaced with navy variations */
+    --brown-800: #4D4D4D;
+    --brown-700: #5A5A5A;
+    --brown-600: #6B6B6B;
+    /* Accent color is now emerald green */
+    --accent: #0E7A53;
+    /* Professional theme semantic colors - All using emerald green and navy variations */
+    --success-bg: #E6F4EF;
+    --success-text: #0E7A53;
+    --success-border: #0E7A53;
+    --warning-bg: #F0F0F0;
+    --warning-text: #5A5A5A;
+    --warning-border: #B8B8B6;
+    --error-bg: #E8E8E6;
+    --error-text: #6B6B6B;
+    --error-border: #B8B8B6;
+    --info-bg: #E6F4EF;
+    --info-text: #0E7A53;
+    --info-border: #0E7A53;
 }
 
 @theme inline {
@@ -22,8 +43,8 @@
 
 @media (prefers-color-scheme: dark) {
      :root {
-        --background: #2C2416;
-        --foreground: #F5F5DC;
+        --background: #2C2C2C;
+        --foreground: #FEFEFC;
     }
 }
 
@@ -34,12 +55,212 @@ body {
 }
 
 
+/* Professional Theme Color Overrides */
+
+
+/* Success states - emerald green */
+
+.bg-green-50,
+.bg-green-100 {
+    background-color: var(--success-bg) !important;
+}
+
+.bg-green-600,
+.bg-green-700 {
+    background-color: var(--success-text) !important;
+}
+
+.text-green-600,
+.text-green-700,
+.text-green-800 {
+    color: var(--success-text) !important;
+}
+
+.border-green-200,
+.border-green-300 {
+    border-color: var(--success-border) !important;
+}
+
+.hover\:bg-green-700:hover {
+    background-color: #0A5D3E !important;
+}
+
+.hover\:bg-green-200:hover {
+    background-color: #CCE9E0 !important;
+}
+
+
+/* Warning/Pending states - navy variations */
+
+.bg-yellow-50,
+.bg-yellow-100 {
+    background-color: var(--warning-bg) !important;
+}
+
+.bg-yellow-600,
+.bg-yellow-700 {
+    background-color: var(--warning-text) !important;
+}
+
+.text-yellow-600,
+.text-yellow-700,
+.text-yellow-800,
+.text-yellow-400,
+.text-yellow-300 {
+    color: var(--warning-text) !important;
+}
+
+.border-yellow-200,
+.border-yellow-300,
+.border-yellow-500 {
+    border-color: var(--warning-border) !important;
+}
+
+
+/* Error/Danger states - darker navy */
+
+.bg-red-50,
+.bg-red-100 {
+    background-color: var(--error-bg) !important;
+}
+
+.bg-red-500,
+.bg-red-600,
+.bg-red-700 {
+    background-color: var(--error-text) !important;
+}
+
+.text-red-500,
+.text-red-600,
+.text-red-700,
+.text-red-800 {
+    color: var(--error-text) !important;
+}
+
+.border-red-200,
+.border-red-300 {
+    border-color: var(--error-border) !important;
+}
+
+.hover\:bg-red-700:hover,
+.hover\:bg-red-200:hover {
+    background-color: #555555 !important;
+}
+
+.hover\:text-red-500:hover,
+.hover\:text-red-600:hover,
+.hover\:text-red-800:hover {
+    color: #555555 !important;
+}
+
+
+/* Info/Processing states - emerald green */
+
+.bg-blue-50,
+.bg-blue-100 {
+    background-color: var(--info-bg) !important;
+}
+
+.bg-blue-600,
+.bg-blue-700 {
+    background-color: var(--info-text) !important;
+}
+
+.text-blue-600,
+.text-blue-700,
+.text-blue-800 {
+    color: var(--info-text) !important;
+}
+
+.border-blue-200,
+.border-blue-300,
+.border-blue-600 {
+    border-color: var(--info-border) !important;
+}
+
+.hover\:bg-blue-700:hover {
+    background-color: #0A5D3E !important;
+}
+
+.hover\:bg-blue-200:hover,
+.hover\:bg-blue-100:hover {
+    background-color: #CCE9E0 !important;
+}
+
+.hover\:text-blue-700:hover,
+.hover\:text-blue-800:hover {
+    color: #0A5D3E !important;
+}
+
+
+/* Shipped/Alternative states - emerald green variations */
+
+.bg-purple-50,
+.bg-purple-100 {
+    background-color: var(--success-bg) !important;
+}
+
+.bg-purple-600,
+.bg-purple-700 {
+    background-color: var(--success-text) !important;
+}
+
+.text-purple-600,
+.text-purple-700,
+.text-purple-800 {
+    color: var(--success-text) !important;
+}
+
+.border-purple-200,
+.border-purple-300 {
+    border-color: var(--success-border) !important;
+}
+
+.hover\:bg-purple-700:hover {
+    background-color: #0A5D3E !important;
+}
+
+.hover\:bg-purple-200:hover {
+    background-color: #CCE9E0 !important;
+}
+
+
+/* Teal/Indigo - use emerald green */
+
+.bg-teal-100,
+.bg-indigo-50,
+.bg-indigo-100 {
+    background-color: var(--success-bg) !important;
+}
+
+.bg-teal-600,
+.bg-indigo-600,
+.bg-indigo-700 {
+    background-color: var(--success-text) !important;
+}
+
+.text-teal-600,
+.text-indigo-600,
+.text-indigo-800 {
+    color: var(--success-text) !important;
+}
+
+.border-indigo-200,
+.border-indigo-300 {
+    border-color: var(--success-border) !important;
+}
+
+.hover\:bg-indigo-700:hover {
+    background-color: #0A5D3E !important;
+}
+
+
 /* Ensure input fields have visible text */
 
 input,
 textarea,
 select {
-    color: var(--brown-800) !important;
+    color: var(--navy) !important;
 }
 
 input::placeholder,
@@ -55,7 +276,7 @@ textarea::placeholder {
     input,
     textarea,
     select {
-        color: var(--foreground) !important;
-        background-color: #1F2937 !important;
+        color: var(--off-white) !important;
+        background-color: #3A3A3A !important;
     }
 }

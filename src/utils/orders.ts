@@ -174,8 +174,9 @@ export const sendOrderConfirmationEmail = async (order: Order): Promise<boolean>
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Email API Error:', error);
+      const errorText = await response.text();
+      console.warn('Email API returned error (non-critical):', errorText);
+      // Don't fail the order if email fails - just log it
       return false;
     }
 
@@ -183,7 +184,8 @@ export const sendOrderConfirmationEmail = async (order: Order): Promise<boolean>
     console.log('✅ Order confirmation email sent successfully to:', order.customer.email);
     return true;
   } catch (error) {
-    console.error('Failed to send order confirmation email:', error);
+    console.warn('Failed to send order confirmation email (non-critical):', error);
+    // Email failure shouldn't block order creation
     return false;
   }
 };

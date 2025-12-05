@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getOrders, type Order } from '@/utils/orders';
 import ReviewForm from '@/components/ReviewForm';
 import { Review } from '@/types/review';
@@ -156,8 +157,10 @@ export default function OrdersPage() {
                             key={idx}
                             className="flex-shrink-0 flex items-center gap-3 bg-[var(--beige-50)] rounded-lg p-3 min-w-[200px]"
                           >
-                            <div className="w-12 h-12 bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] rounded flex items-center justify-center">
-                              <span className="text-sm font-bold text-[var(--brown-600)]">{item.image}</span>
+                            <div className="w-12 h-12 bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] rounded overflow-hidden relative flex-shrink-0">
+                              {item.image && typeof item.image === 'object' ? (
+                                <Image src={item.image} alt={item.name} fill className="object-cover" />
+                              ) : null}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-semibold text-[var(--brown-800)] truncate">{item.name}</p>

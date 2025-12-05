@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { SavedCart } from '@/types/cart';
+import Image from 'next/image';
 
 export default function SavedCarts() {
   const { getSavedCartsList, restoreSavedCart, deleteSaved } = useCart();
@@ -169,13 +170,15 @@ export default function SavedCarts() {
             <div className="space-y-4 mb-6">
               {selectedCart.items.map((item, index) => (
                 <div key={index} className="flex gap-4 pb-4 border-b border-[var(--beige-200)]">
-                  <div className="w-16 h-16 bg-[var(--beige-100)] rounded flex-shrink-0 flex items-center justify-center">
-                    {item.image ? (
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded" />
+                  <div className="w-16 h-16 bg-[var(--beige-100)] rounded flex-shrink-0 overflow-hidden relative">
+                    {item.image && typeof item.image === 'object' ? (
+                      <Image src={item.image} alt={item.name} fill className="object-cover rounded" />
                     ) : (
-                      <span className="text-[var(--brown-700)] text-xs font-bold">
-                        {item.category?.substring(0, 2).toUpperCase()}
-                      </span>
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-[var(--brown-700)] text-xs font-bold">
+                          {item.category?.substring(0, 2).toUpperCase()}
+                        </span>
+                      </div>
                     )}
                   </div>
                   <div className="flex-1">

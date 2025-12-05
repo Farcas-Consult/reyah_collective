@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import TrackingDisplay from '@/components/TrackingDisplay';
 import { 
   getOrderById, 
@@ -257,7 +258,11 @@ export default function TrackOrderPage() {
         <div className="space-y-4">
           {order.items.map((item, index) => (
             <div key={index} className="flex items-center space-x-4 border-b pb-4">
-              <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded" />
+              <div className="w-20 h-20 overflow-hidden relative rounded">
+                {item.image && typeof item.image === 'object' ? (
+                  <Image src={item.image} alt={item.name} fill className="object-cover" />
+                ) : null}
+              </div>
               <div className="flex-1">
                 <h4 className="font-medium">{item.name}</h4>
                 <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>

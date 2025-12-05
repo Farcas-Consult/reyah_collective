@@ -213,7 +213,7 @@ export default function Home() {
               </div>
 
               {/* Center - Main Banner Slider */}
-              <div className="flex-1 relative h-[320px] md:h-[400px] overflow-hidden rounded-lg bg-gradient-to-br from-black via-gray-900 to-orange-900">
+              <div className="flex-1 relative h-[320px] md:h-[400px] overflow-hidden rounded-lg bg-gradient-to-br from-black via-[var(--navy)] to-[var(--emerald-green)]">
                 {heroSlides.map((slide, index) => (
                   <div
                     key={index}
@@ -222,10 +222,10 @@ export default function Home() {
                     }`}
                   >
                     {/* Black Friday Style Background */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-black via-gray-900 to-orange-600" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black via-[var(--navy)] to-[var(--emerald-green)]" />
                     
                     {/* Product Image Area */}
-                    <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600">
+                    <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-br from-[#0E7A53] via-[#0A5D3E] to-[#085A3B]">
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="w-64 h-64 bg-white/20 rounded-full blur-3xl" />
                       </div>
@@ -242,7 +242,7 @@ export default function Home() {
                           <div className="bg-white text-black px-6 py-3 font-bold text-xl md:text-2xl tracking-tight">
                             BLACK FRIDAY
                           </div>
-                          <div className="bg-red-600 text-white px-6 py-2 font-bold text-lg">
+                          <div className="bg-[var(--navy)] text-white px-6 py-2 font-bold text-lg">
                             EXTRA TIME!
                           </div>
                         </div>
@@ -254,8 +254,8 @@ export default function Home() {
                         {/* Price Display */}
                         <div className="mb-6">
                           <div className="flex items-baseline gap-3 mb-2">
-                            <span className="text-orange-400 text-sm line-through">KSHS 26,199</span>
-                            <span className="text-yellow-400 text-5xl md:text-6xl font-bold">14,999</span>
+                            <span className="text-gray-400 text-sm line-through">KSHS 26,199</span>
+                            <span className="text-[var(--emerald-green)] text-5xl md:text-6xl font-bold">14,999</span>
                           </div>
                         </div>
 
@@ -273,7 +273,7 @@ export default function Home() {
                           onClick={() => setCurrentSlide(dot % heroSlides.length)}
                           className={`h-2 rounded-full transition-all ${
                             dot % heroSlides.length === currentSlide
-                              ? 'bg-orange-500 w-8'
+                              ? 'bg-[var(--emerald-green)] w-8'
                               : 'bg-white/40 w-2'
                           }`}
                         />
@@ -286,7 +286,7 @@ export default function Home() {
               {/* Right Sidebar - Quick Actions */}
               <div className="hidden xl:block w-64 flex-shrink-0 space-y-4">
                 {/* WhatsApp Card */}
-                <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-4 text-white cursor-pointer hover:shadow-lg transition-shadow">
+                <div className="bg-gradient-to-br from-[var(--emerald-green)] to-[#0A5D3E] rounded-lg p-4 text-white cursor-pointer hover:shadow-lg transition-shadow">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
                       <span className="text-2xl">📱</span>
@@ -299,7 +299,7 @@ export default function Home() {
                 </div>
 
                 {/* China Town */}
-                <div className="bg-gradient-to-br from-red-600 to-red-700 rounded-lg p-4 text-white cursor-pointer hover:shadow-lg transition-shadow">
+                <div className="bg-gradient-to-br from-[var(--navy)] to-[#3A3A3A] rounded-lg p-4 text-white cursor-pointer hover:shadow-lg transition-shadow">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
                       <span className="text-2xl">🏮</span>
@@ -311,8 +311,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Sell on Jumia */}
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-4 text-white cursor-pointer hover:shadow-lg transition-shadow">
+                {/* Sell on Reyah */}
+                <div className="bg-gradient-to-br from-[var(--emerald-green)] to-[#0A5D3E] rounded-lg p-4 text-white cursor-pointer hover:shadow-lg transition-shadow">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
                       <span className="text-2xl">💰</span>
@@ -325,13 +325,12 @@ export default function Home() {
                 </div>
 
                 {/* Call or WhatsApp */}
-                <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-lg p-5 text-white text-center cursor-pointer hover:shadow-lg transition-shadow">
+                <div className="bg-gradient-to-br from-[var(--emerald-green)] to-[#0A5D3E] rounded-lg p-5 text-white text-center cursor-pointer hover:shadow-lg transition-shadow">
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3">
                     <span className="text-4xl">📞</span>
                   </div>
                   <div className="font-bold text-sm mb-1">CALL OR WHATSAPP</div>
-                  <div className="text-2xl font-bold text-yellow-300">0711 011 011</div>
-                  <div className="text-xs mt-1 text-white/90">TO ORDER</div>
+                  <div className="text-2xl font-bold">0741 941 941</div>
                 </div>
               </div>
             </div>
@@ -440,7 +439,7 @@ export default function Home() {
         <section className="py-0 bg-white">
           <div className="container mx-auto px-4 max-w-7xl">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
-              <div className="relative h-32 md:h-40 rounded-xl overflow-hidden group cursor-pointer bg-gradient-to-r from-[var(--accent)] to-[var(--brown-600)]">
+              <div className="relative h-32 md:h-40 rounded-xl overflow-hidden group cursor-pointer bg-gradient-to-r from-[var(--emerald-green)] to-[#0A5D3E]">
                 <div className="relative h-full flex flex-col justify-center px-6">
                   <svg className="w-10 h-10 md:w-12 md:h-12 text-white mb-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -450,7 +449,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="relative h-32 md:h-40 rounded-xl overflow-hidden group cursor-pointer bg-gradient-to-r from-blue-600 to-blue-800">
+              <div className="relative h-32 md:h-40 rounded-xl overflow-hidden group cursor-pointer bg-gradient-to-r from-[var(--emerald-green)] to-[#0A5D3E]">
                 <div className="relative h-full flex flex-col justify-center px-6">
                   <svg className="w-10 h-10 md:w-12 md:h-12 text-white mb-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -460,7 +459,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="relative h-32 md:h-40 rounded-xl overflow-hidden group cursor-pointer bg-gradient-to-r from-green-600 to-emerald-700">
+              <div className="relative h-32 md:h-40 rounded-xl overflow-hidden group cursor-pointer bg-gradient-to-r from-[var(--emerald-green)] to-[#0A5D3E]">
                 <div className="relative h-full flex flex-col justify-center px-6">
                   <svg className="w-10 h-10 md:w-12 md:h-12 text-white mb-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>

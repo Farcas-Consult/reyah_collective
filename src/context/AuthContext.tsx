@@ -8,27 +8,49 @@ export interface User {
   lastName: string;
   email: string;
   phone: string;
+  role?: 'customer' | 'seller' | 'supplier' | 'admin';
   isAdmin?: boolean;
+  
+  // Seller fields
   isSeller?: boolean;
   sellerName?: string;
   businessDescription?: string;
+  businessName?: string;
+  businessType?: string;
+  bankAccount?: string;
+  kraPin?: string;
   sellerStatus?: 'pending' | 'approved' | 'rejected';
   sellerRequestDate?: string;
   sellerApproved?: boolean;
   sellerRating?: number;
   sellerReviewCount?: number;
   sellerTotalSales?: number;
+  
+  // Supplier fields
   isSupplier?: boolean;
   companyName?: string;
+  companyType?: string;
+  registrationNumber?: string;
   supplierType?: string;
   supplierStatus?: 'pending' | 'approved' | 'rejected';
+  supplierApproved?: boolean;
   supplierRating?: number;
   supplierReviewCount?: number;
+  
+  // Customer fields
+  paymentMethod?: string;
+  
+  // Documents
+  documents?: {
+    idDocument?: string;
+    businessCertificate?: string;
+    kraDocument?: string;
+  };
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; user?: User }>;
   signup: (userData: Omit<User, 'id'> & { password: string }) => Promise<boolean>;
   logout: () => void;
   refreshUser: () => void;
@@ -48,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; user?: User }> => {
     try {
       // Get all users from localStorage
       const usersData = localStorage.getItem('reyah_users');
@@ -63,12 +85,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { password, ...userWithoutPassword } = foundUser;
         setUser(userWithoutPassword);
         localStorage.setItem('reyah_user', JSON.stringify(userWithoutPassword));
-        return true;
+        return { success: true, user: userWithoutPassword };
       }
-      return false;
+      return { success: false };
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      return { success: false };
     }
   };
 

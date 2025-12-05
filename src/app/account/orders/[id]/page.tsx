@@ -6,6 +6,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getOrderById, type Order } from '@/utils/orders';
 
 export default function OrderDetailsPage() {
@@ -196,8 +197,10 @@ export default function OrderDetailsPage() {
               <div className="space-y-4">
                 {order.items.map((item) => (
                   <div key={item.id} className="flex gap-4 pb-4 border-b border-[var(--beige-300)] last:border-0">
-                    <div className="w-20 h-20 bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] rounded-lg flex items-center justify-center flex-shrink-0">
-                      <span className="text-xl font-bold text-[var(--brown-600)]">{item.image}</span>
+                    <div className="w-20 h-20 bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] rounded-lg overflow-hidden relative flex-shrink-0">
+                      {item.image && typeof item.image === 'object' ? (
+                        <Image src={item.image} alt={item.name} fill className="object-cover" />
+                      ) : null}
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-[var(--brown-800)] mb-1">{item.name}</h3>
