@@ -5,8 +5,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useLocalization } from '@/context/LocalizationContext';
 import { Message } from '@/types/message';
 import SearchBar from '@/components/SearchBar';
+import LocaleSelector from '@/components/LocaleSelector';
 
 export default function Header() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
@@ -15,6 +17,7 @@ export default function Header() {
   const router = useRouter();
   const { cartCount } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
+  const { t } = useLocalization();
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -84,7 +87,7 @@ export default function Header() {
               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
               </svg>
-              <span>Sell on Reyah</span>
+              <span>{t('nav.sellOnReyah')}</span>
             </Link>
             <div className="flex items-center gap-6 text-[var(--brown-700)]">
               <span className="font-bold text-[var(--brown-800)]">REYAH</span>
@@ -129,11 +132,11 @@ export default function Header() {
                   </svg>
                   <div className="hidden lg:flex flex-col items-start">
                     <span className="text-xs text-gray-500 group-hover:text-[var(--accent)]">
-                      {isAuthenticated ? 'Hi,' : 'Login'}
+                      {isAuthenticated ? t('common.hi') + ',' : t('common.login')}
                     </span>
                     <div className="flex items-center gap-1">
                       <span className="text-sm font-medium">
-                        {isAuthenticated ? user?.firstName : 'Account'}
+                        {isAuthenticated ? user?.firstName : t('common.account')}
                       </span>
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -157,7 +160,7 @@ export default function Header() {
                             onClick={() => setShowAccountMenu(false)}
                             className="block px-4 py-2 text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 transition-colors font-bold"
                           >
-                            🔐 Admin Dashboard
+                            🔐 {t('nav.adminDashboard')}
                           </Link>
                           <div className="border-t border-[var(--beige-300)] my-2"></div>
                         </>
@@ -169,7 +172,7 @@ export default function Header() {
                             onClick={() => setShowAccountMenu(false)}
                             className="block px-4 py-2 text-white bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 transition-colors font-bold"
                           >
-                            🏪 Seller Dashboard
+                            🏪 {t('nav.sellerDashboard')}
                           </Link>
                           <div className="border-t border-[var(--beige-300)] my-2"></div>
                         </>
@@ -181,7 +184,7 @@ export default function Header() {
                             onClick={() => setShowAccountMenu(false)}
                             className="block px-4 py-2 text-white bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 transition-colors font-bold"
                           >
-                            ⏳ Seller Status: Pending
+                            ⏳ {t('status.sellerStatus')}: {t('status.pending')}
                           </Link>
                           <div className="border-t border-[var(--beige-300)] my-2"></div>
                         </>
@@ -193,7 +196,7 @@ export default function Header() {
                             onClick={() => setShowAccountMenu(false)}
                             className="block px-4 py-2 text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 transition-colors font-bold"
                           >
-                            🏭 Supplier Dashboard
+                            🏭 {t('nav.supplierDashboard')}
                           </Link>
                           <div className="border-t border-[var(--beige-300)] my-2"></div>
                         </>
@@ -205,7 +208,7 @@ export default function Header() {
                             onClick={() => setShowAccountMenu(false)}
                             className="block px-4 py-2 text-white bg-gradient-to-r from-yellow-600 to-yellow-500 hover:from-yellow-700 hover:to-yellow-600 transition-colors font-bold"
                           >
-                            ⏳ Supplier Status: Pending
+                            ⏳ {t('status.supplierStatus')}: {t('status.pending')}
                           </Link>
                           <div className="border-t border-[var(--beige-300)] my-2"></div>
                         </>
@@ -217,14 +220,14 @@ export default function Header() {
                             onClick={() => setShowAccountMenu(false)}
                             className="block px-4 py-2 text-green-600 hover:bg-green-50 transition-colors font-semibold"
                           >
-                            🏪 Become a Seller
+                            🏪 {t('nav.becomeSeller')}
                           </Link>
                           <Link 
                             href="/supplier-setup"
                             onClick={() => setShowAccountMenu(false)}
                             className="block px-4 py-2 text-purple-600 hover:bg-purple-50 transition-colors font-semibold"
                           >
-                            🏭 Become a Supplier
+                            🏭 {t('nav.becomeSupplier')}
                           </Link>
                           <div className="border-t border-[var(--beige-300)] my-2"></div>
                         </>
@@ -234,35 +237,35 @@ export default function Header() {
                         onClick={() => setShowAccountMenu(false)}
                         className="block px-4 py-2 text-[var(--brown-800)] hover:bg-[var(--beige-100)] transition-colors"
                       >
-                        My Account
+                        {t('nav.myAccount')}
                       </Link>
                       <Link 
                         href="/account/orders"
                         onClick={() => setShowAccountMenu(false)}
                         className="block px-4 py-2 text-[var(--brown-800)] hover:bg-[var(--beige-100)] transition-colors"
                       >
-                        My Orders
+                        {t('nav.myOrders')}
                       </Link>
                       <Link 
                         href="/account/rewards"
                         onClick={() => setShowAccountMenu(false)}
                         className="block px-4 py-2 text-[var(--brown-800)] hover:bg-[var(--beige-100)] transition-colors flex items-center gap-2"
                       >
-                        <span>⭐ Rewards</span>
+                        <span>⭐ {t('nav.rewards')}</span>
                       </Link>
                       <Link 
                         href="/account/wishlists"
                         onClick={() => setShowAccountMenu(false)}
                         className="block px-4 py-2 text-[var(--brown-800)] hover:bg-[var(--beige-100)] transition-colors flex items-center gap-2"
                       >
-                        <span>❤️ My Wishlists</span>
+                        <span>❤️ {t('nav.wishlists')}</span>
                       </Link>
                       <Link 
                         href="/messages"
                         onClick={() => setShowAccountMenu(false)}
                         className="block px-4 py-2 text-[var(--brown-800)] hover:bg-[var(--beige-100)] transition-colors flex items-center justify-between"
                       >
-                        <span>Messages</span>
+                        <span>{t('nav.messages')}</span>
                         {unreadCount > 0 && (
                           <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                             {unreadCount}
@@ -274,7 +277,7 @@ export default function Header() {
                         onClick={() => setShowAccountMenu(false)}
                         className="block px-4 py-2 text-[var(--brown-800)] hover:bg-[var(--beige-100)] transition-colors"
                       >
-                        Settings
+                        {t('nav.settings')}
                       </Link>
                     </div>
                     <div className="border-t border-[var(--beige-300)] py-2">
@@ -282,7 +285,7 @@ export default function Header() {
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50 transition-colors font-semibold"
                       >
-                        Logout
+                        {t('nav.logout')}
                       </button>
                     </div>
                   </div>
@@ -294,9 +297,9 @@ export default function Header() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div className="hidden lg:flex flex-col items-start">
-                  <span className="text-xs text-gray-500 group-hover:text-[var(--accent)]">Need</span>
+                  <span className="text-xs text-gray-500 group-hover:text-[var(--accent)]">{t('common.need')}</span>
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-medium">Help</span>
+                    <span className="text-sm font-medium">{t('common.help')}</span>
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
@@ -304,11 +307,14 @@ export default function Header() {
                 </div>
               </Link>
 
+              {/* Language & Currency Selector */}
+              <LocaleSelector />
+
               <Link href="/cart" className="relative flex items-center gap-2 text-[var(--brown-700)] hover:text-[var(--accent)] transition-colors">
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
-                <span className="hidden lg:block text-sm font-medium">Cart</span>
+                <span className="hidden lg:block text-sm font-medium">{t('common.cart')}</span>
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 bg-[var(--accent)] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-md">
                     {cartCount}
@@ -328,25 +334,25 @@ export default function Header() {
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
               </svg>
-              <span className="font-semibold">NATIONWIDE DELIVERY</span>
+              <span className="font-semibold">{t('delivery.nationwide')}</span>
             </div>
             <div className="hidden md:flex items-center gap-2 whitespace-nowrap">
               <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
-              <span>Fast & Reliable Shipping</span>
+              <span>{t('delivery.fastReliable')}</span>
             </div>
             <div className="hidden lg:flex items-center gap-2 whitespace-nowrap">
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Same-Day Delivery Available</span>
+              <span>{t('delivery.sameDay')}</span>
             </div>
             <div className="hidden xl:flex items-center gap-2 whitespace-nowrap">
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
               </svg>
-              <span>Free Delivery on Orders Over KES 5,000</span>
+              <span>{t('delivery.freeOver')}</span>
             </div>
           </div>
         </div>

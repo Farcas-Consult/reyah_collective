@@ -28,6 +28,8 @@ import BulkPricingDisplay from '@/components/BulkPricingDisplay';
 import WholesaleBadge from '@/components/WholesaleBadge';
 import { getProductPricingRules, calculateTieredPrice, isWholesaleCustomer } from '@/utils/wholesaleUtils';
 import type { BulkPricingRule } from '@/types/wholesale';
+import ProductRecommendations from '@/components/ProductRecommendations';
+import { trackProductView } from '@/utils/recommendationEngine';
 import Link from 'next/link';
 
 // Sample product data - in a real app, this would come from an API/database
@@ -69,6 +71,16 @@ export default function ProductPage() {
     if (product) {
       loadReviews();
       setInComparison(isInComparison(product.id));
+      
+      // Track product view
+      if (user?.id) {
+        trackProductView(user.id, {
+          id: product.id.toString(),
+          name: product.name,
+          category: product.category,
+          price: product.price
+        });
+      }
       
       // Check for flash sales
       updateSaleStatuses();
@@ -696,6 +708,25 @@ export default function ProductPage() {
           {/* Q&A Section */}
           <div className="mt-12">
             <ProductQA productId={productId} productName={product.name} />
+          </div>
+
+          {/* Recommendations Section */}
+          <div className="mt-16 space-y-12">
+            <ProductRecommendations
+              type="customers_also_bought"
+              allProducts={allProducts}
+              currentProductId={product.id.toString()}
+              userId={user?.id}
+              limit={6}
+            />
+
+            <ProductRecommendations
+              type="related_products"
+              allProducts={allProducts}
+              currentProductId={product.id.toString()}
+              userId={user?.id}
+              limit={6}
+            />
           </div>
         </div>
       </main>
