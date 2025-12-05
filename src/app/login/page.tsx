@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [pendingMessage, setPendingMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setPendingMessage('');
     setLoading(true);
 
     if (!email || !password) {
@@ -25,10 +27,32 @@ export default function LoginPage() {
       return;
     }
 
-    const success = await login(email, password);
+    const result = await login(email, password);
 
-    if (success) {
-      router.push('/account');
+    if (result.success && result.user) {
+      const user = result.user;
+      
+      // Route based on user role and approval status
+      if (user.isAdmin) {
+        router.push('/admin');
+      } else if (user.isSeller) {
+        if (user.sellerApproved) {
+          router.push('/seller');
+        } else {
+          setPendingMessage('Your seller account is pending approval. You will be notified once approved.');
+          router.push('/seller-pending');
+        }
+      } else if (user.isSupplier) {
+        if (user.supplierApproved) {
+          router.push('/supplier');
+        } else {
+          setPendingMessage('Your supplier account is pending approval. You will be notified once approved.');
+          router.push('/supplier-pending');
+        }
+      } else {
+        // Regular customer
+        router.push('/account');
+      }
     } else {
       setError('Invalid email or password');
     }
@@ -57,6 +81,12 @@ export default function LoginPage() {
           {error && (
             <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-md mb-4">
               {error}
+            </div>
+          )}
+
+          {pendingMessage && (
+            <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 px-4 py-3 rounded-md mb-4">
+              {pendingMessage}
             </div>
           )}
 

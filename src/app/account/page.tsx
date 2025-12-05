@@ -7,6 +7,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Order {
   id: string;
@@ -305,8 +306,10 @@ export default function AccountPage() {
                       <div className="space-y-3 mb-4">
                         {order.items.map((item) => (
                           <div key={item.id} className="flex items-center gap-4 pb-3 border-b border-[var(--beige-200)] last:border-0">
-                            <div className="w-16 h-16 bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] rounded flex items-center justify-center flex-shrink-0">
-                              <span className="text-lg font-bold text-[var(--brown-600)]">{item.image}</span>
+                            <div className="w-16 h-16 bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] rounded overflow-hidden flex-shrink-0 relative">
+                              {item.image && typeof item.image === 'object' ? (
+                                <Image src={item.image} alt={item.name} fill className="object-cover" />
+                              ) : null}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-[var(--brown-800)] line-clamp-1">{item.name}</p>

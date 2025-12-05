@@ -16,6 +16,7 @@ interface Product {
   image: string;
   description: string;
   seller: string;
+  supplier: string;
 }
 
 export default function AdminProductsPage() {
@@ -33,6 +34,7 @@ export default function AdminProductsPage() {
     image: '',
     description: '',
     seller: '',
+    supplier: '',
   });
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
@@ -75,6 +77,7 @@ export default function AdminProductsPage() {
           image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=400',
           description: 'Beautiful handcrafted silver rings',
           seller: 'Artisan Metals Kenya',
+          supplier: 'Silver Supplies Ltd',
         },
         {
           id: 2,
@@ -85,6 +88,7 @@ export default function AdminProductsPage() {
           image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400',
           description: 'Eco-friendly food storage solution',
           seller: 'Green Living Co.',
+          supplier: 'Eco Materials Kenya',
         },
         {
           id: 3,
@@ -95,6 +99,7 @@ export default function AdminProductsPage() {
           image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=400',
           description: 'Premium leather-bound journal',
           seller: 'Heritage Crafts',
+          supplier: 'Leather Goods Suppliers',
         },
       ];
       localStorage.setItem('reyah_products', JSON.stringify(sampleProducts));
@@ -117,6 +122,7 @@ export default function AdminProductsPage() {
       image: formData.image || '',
       description: formData.description || '',
       seller: formData.seller || 'Unknown Seller',
+      supplier: formData.supplier || 'Unknown Supplier',
     };
 
     const updatedProducts = [...products, newProduct];
@@ -164,6 +170,7 @@ export default function AdminProductsPage() {
       image: '',
       description: '',
       seller: '',
+      supplier: '',
     });
     setImagePreview('');
   };
@@ -198,7 +205,8 @@ export default function AdminProductsPage() {
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.seller.toLowerCase().includes(searchQuery.toLowerCase())
+      p.seller.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.supplier && p.supplier.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   if (!isAuthenticated || !user?.isAdmin) {
@@ -299,7 +307,7 @@ export default function AdminProductsPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, category, or seller..."
+            placeholder="Search by name, category, seller, or supplier..."
             className="w-full px-4 py-2 border-2 border-[var(--beige-300)] rounded-md focus:outline-none focus:border-[var(--accent)] text-[var(--brown-800)]"
           />
         </div>
@@ -323,6 +331,7 @@ export default function AdminProductsPage() {
                     <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Price</th>
                     <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Stock</th>
                     <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Seller</th>
+                    <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Supplier</th>
                     <th className="text-left py-4 px-4 text-sm font-semibold text-[var(--brown-800)]">Actions</th>
                   </tr>
                 </thead>
@@ -372,6 +381,7 @@ export default function AdminProductsPage() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-sm text-gray-700">{product.seller}</td>
+                      <td className="py-4 px-4 text-sm text-gray-700">{product.supplier || 'N/A'}</td>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
                           <button
@@ -484,7 +494,7 @@ export default function AdminProductsPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-[var(--brown-800)] mb-2">
-                  Seller Name
+                  Seller Name *
                 </label>
                 <input
                   type="text"
@@ -492,6 +502,19 @@ export default function AdminProductsPage() {
                   onChange={(e) => setFormData({ ...formData, seller: e.target.value })}
                   className="w-full px-4 py-2 border-2 border-[var(--beige-300)] rounded-md focus:outline-none focus:border-[var(--accent)]"
                   placeholder="Enter seller name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[var(--brown-800)] mb-2">
+                  Supplier Name *
+                </label>
+                <input
+                  type="text"
+                  value={formData.supplier}
+                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-[var(--beige-300)] rounded-md focus:outline-none focus:border-[var(--accent)]"
+                  placeholder="Enter supplier name"
                 />
               </div>
 

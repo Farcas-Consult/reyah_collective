@@ -8,6 +8,7 @@ import BackButton from '@/components/BackButton';
 import StarRating from '@/components/StarRating';
 import ReviewDisplay from '@/components/ReviewDisplay';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Review, ReviewStats } from '@/types/review';
 
 interface Product {
@@ -193,8 +194,10 @@ export default function SellerProfilePage() {
                       href={`/shop/${product.id}`}
                       className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] overflow-hidden hover:shadow-lg transition-shadow"
                     >
-                      <div className="aspect-square bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] flex items-center justify-center">
-                        <span className="text-4xl">{product.image}</span>
+                      <div className="aspect-square bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] relative overflow-hidden">
+                        {product.image && typeof product.image === 'object' ? (
+                          <Image src={product.image} alt={product.name} fill className="object-cover" />
+                        ) : null}
                       </div>
                       <div className="p-4">
                         <h3 className="font-semibold text-[var(--brown-800)] mb-2">{product.name}</h3>

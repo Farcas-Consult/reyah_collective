@@ -13,6 +13,7 @@ interface Product {
   description: string
   image: string
   seller: string
+  supplier: string
   stock: number
   createdAt: string
 }
@@ -39,7 +40,8 @@ export default function SellerProductsPage() {
     category: '',
     description: '',
     image: '',
-    stock: ''
+    stock: '',
+    supplier: ''
   })
 
   useEffect(() => {
@@ -123,6 +125,7 @@ export default function SellerProductsPage() {
       description: formData.description,
       image: formData.image,
       seller: user?.sellerName || '',
+      supplier: formData.supplier || 'General Supplier',
       stock: parseInt(formData.stock),
       createdAt: new Date().toISOString()
     }
@@ -186,7 +189,8 @@ export default function SellerProductsPage() {
       category: product.category,
       description: product.description,
       image: product.image,
-      stock: product.stock.toString()
+      stock: product.stock.toString(),
+      supplier: product.supplier || ''
     })
     setImagePreview(product.image)
     setShowAddForm(false)
@@ -199,7 +203,8 @@ export default function SellerProductsPage() {
       category: '',
       description: '',
       image: '',
-      stock: ''
+      stock: '',
+      supplier: ''
     })
     setImagePreview('')
   }
