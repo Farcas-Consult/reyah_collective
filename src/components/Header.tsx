@@ -9,6 +9,7 @@ import { useLocalization } from '@/context/LocalizationContext';
 import { Message } from '@/types/message';
 import SearchBar from '@/components/SearchBar';
 import LocaleSelector from '@/components/LocaleSelector';
+import { getProductImageSrc } from '@/data/products';
 
 export default function Header() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
@@ -41,9 +42,12 @@ export default function Header() {
       const users = JSON.parse(localStorage.getItem('reyah_users') || '[]');
       
       const defaultProducts = [
-        { id: 1, name: 'Handwoven Basket', category: 'Home Decor', price: 2500, image: '/images/basket.jpg', sellerName: 'Artisan Weaves', sellerRating: 4.8 },
-        { id: 2, name: 'Beaded Necklace', category: 'Jewelry', price: 1500, image: '/images/necklace.jpg', sellerName: 'Bead Craft Co.', sellerRating: 4.5 },
-        { id: 3, name: 'Maasai Shuka', category: 'Clothing', price: 3500, image: '/images/shuka.jpg', sellerName: 'Traditional Fabrics', sellerRating: 4.9 },
+        { id: 1, name: 'Handwoven Basket', category: 'Artisan Home Decor', price: 2500, image: getProductImageSrc(5), sellerName: 'Artisan Weaves', sellerRating: 4.8 },
+        { id: 2, name: 'Beaded Necklace', category: 'Handmade Jewelry', price: 1500, image: getProductImageSrc('Beaded Necklace with Pendant'), sellerName: 'Bead Craft Co.', sellerRating: 4.5 },
+        { id: 3, name: 'Vintage Clock', category: 'Vintage and Antiques', price: 3500, image: getProductImageSrc(3), sellerName: 'Timeless Treasures', sellerRating: 4.9 },
+        { id: 4, name: 'Ceramic Vase', category: 'Artisan Home Decor', price: 1800, image: getProductImageSrc('Hand-Painted Ceramic Vase'), sellerName: 'Clay Masters', sellerRating: 4.7 },
+        { id: 5, name: 'Gemstone Earrings', category: 'Handmade Jewelry', price: 2200, image: getProductImageSrc('Gemstone Pendant Necklace'), sellerName: 'Gem Artisans', sellerRating: 4.6 },
+        { id: 6, name: 'Antique Mirror', category: 'Vintage and Antiques', price: 4500, image: getProductImageSrc('Antique Brass Candlestick'), sellerName: 'Heritage Collection', sellerRating: 4.8 },
       ];
 
       const sellerProducts = users

@@ -1,35 +1,37 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
+import { getProductImageSrc } from '@/data/products';
 
 const products = [
   {
-    id: 1,
-    name: 'Artisan Ceramic Vase',
-    price: 89.99,
-    image: '/placeholder-product-1.jpg',
+    id: 7,
+    name: 'Hand-Painted Ceramic Vase',
+    price: 7314,
+    image: getProductImageSrc('Hand-Painted Ceramic Vase'),
     category: 'Home Decor',
   },
   {
-    id: 2,
-    name: 'Handwoven Throw Blanket',
-    price: 129.99,
-    image: '/placeholder-product-2.jpg',
+    id: 9,
+    name: 'Handwoven Throw Pillow',
+    price: 4387,
+    image: getProductImageSrc('Handwoven Throw Pillow'),
     category: 'Textiles',
   },
   {
-    id: 3,
-    name: 'Minimalist Wall Art',
-    price: 149.99,
-    image: '/placeholder-product-3.jpg',
+    id: 10,
+    name: 'Wooden Wall Art Panel',
+    price: 8500,
+    image: getProductImageSrc('Wooden Wall Art Panel'),
     category: 'Art',
   },
   {
-    id: 4,
-    name: 'Organic Cotton Pillow Set',
-    price: 79.99,
-    image: '/placeholder-product-4.jpg',
-    category: 'Bedding',
+    id: 6,
+    name: 'Custom Macrame Wall Hanging',
+    price: 10639,
+    image: getProductImageSrc(5),
+    category: 'Home Decor',
   },
 ];
 
@@ -47,9 +49,12 @@ export default function FeaturedProducts() {
             <div key={product.id} className="group">
               <Link href={`/product/${product.id}`}>
                 <div className="relative aspect-square bg-[var(--beige-200)] rounded-lg overflow-hidden mb-4">
-                  <div className="absolute inset-0 flex items-center justify-center text-[var(--brown-700)] text-sm">
-                    {product.name}
-                  </div>
+                  <Image
+                    src={product.image}
+                    alt={product.name}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
                   <div className="absolute inset-0 bg-[var(--brown-800)] opacity-0 group-hover:opacity-10 transition-opacity" />
                 </div>
                 <div className="space-y-2">

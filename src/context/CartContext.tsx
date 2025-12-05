@@ -18,7 +18,7 @@ export interface CartItem {
   name: string;
   price: number;
   quantity: number;
-  image: string;
+  image: string | any; // Can be string path or imported image object
   category: string;
   inStock: boolean;
 }

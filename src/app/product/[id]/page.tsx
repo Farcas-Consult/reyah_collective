@@ -31,18 +31,20 @@ import type { BulkPricingRule } from '@/types/wholesale';
 import ProductRecommendations from '@/components/ProductRecommendations';
 import { trackProductView } from '@/utils/recommendationEngine';
 import Link from 'next/link';
+import Image from 'next/image';
+import { getProductImageSrc } from '@/data/products';
 
 // Sample product data - in a real app, this would come from an API/database
 const allProducts = [
   // Flash Deals
-  { id: 1, name: 'Handcrafted Silver Ring Set', price: 11999, originalPrice: 19500, category: 'Jewelry', seller: 'Artisan Metals Kenya', sellerRating: 4.8, description: 'Beautiful handcrafted silver ring set featuring intricate designs. Made from 925 sterling silver by skilled artisans. Perfect for special occasions or everyday wear.', rating: 4.9, reviews: 234, stock: 50, images: ['JW'], features: ['925 Sterling Silver', 'Handcrafted', 'Adjustable Size', 'Gift Boxed'], specifications: { Material: 'Sterling Silver', Weight: '12g', Origin: 'Kenya' } },
-  { id: 2, name: 'Organic Beeswax Food Wraps', price: 3299, originalPrice: 4650, category: 'Eco-Friendly', seller: 'Green Living KE', sellerRating: 4.9, description: 'Reusable organic beeswax food wraps - an eco-friendly alternative to plastic wrap. Made from organic cotton and sustainably sourced beeswax. Set of 5 in various sizes.', rating: 4.9, reviews: 189, stock: 45, images: ['EC'], features: ['100% Organic Cotton', 'Reusable', 'Biodegradable', 'Set of 5'], specifications: { Material: 'Organic Cotton & Beeswax', Sizes: 'Small, Medium, Large', Care: 'Hand wash cold water' } },
-  { id: 3, name: 'Vintage Leather Journal', price: 6099, originalPrice: 8650, category: 'Vintage', seller: 'Heritage Crafts', sellerRating: 4.7, description: 'Authentic vintage-style leather journal with handmade paper. Features a leather strap closure and aged paper for a classic feel. Perfect for writers and artists.', rating: 4.8, reviews: 156, stock: 60, images: ['VG'], features: ['Genuine Leather', 'Handmade Paper', '200 Pages', 'Strap Closure'], specifications: { Size: '6x8 inches', Pages: '200', Binding: 'Hand-stitched' } },
-  { id: 4, name: 'Artisan Coffee Blend - 500g', price: 4399, originalPrice: 5999, category: 'Food', seller: 'Kenyan Coffee Co.', sellerRating: 5.0, description: 'Premium artisan coffee blend sourced from the highlands of Kenya. Medium roast with notes of chocolate and citrus. Freshly roasted to order.', rating: 5.0, reviews: 312, stock: 30, images: ['FD'], features: ['Single Origin', 'Medium Roast', 'Freshly Roasted', 'Fair Trade'], specifications: { Weight: '500g', Origin: 'Kenya Highlands', Roast: 'Medium' } },
+  { id: 1, name: 'Handcrafted Silver Ring Set', price: 11999, originalPrice: 19500, category: 'Jewelry', seller: 'Artisan Metals Kenya', sellerRating: 4.8, description: 'Beautiful handcrafted silver ring set featuring intricate designs. Made from 925 sterling silver by skilled artisans. Perfect for special occasions or everyday wear.', rating: 4.9, reviews: 234, stock: 50, images: [getProductImageSrc(1)], features: ['925 Sterling Silver', 'Handcrafted', 'Adjustable Size', 'Gift Boxed'], specifications: { Material: 'Sterling Silver', Weight: '12g', Origin: 'Kenya' } },
+  { id: 2, name: 'Organic Beeswax Food Wraps', price: 3299, originalPrice: 4650, category: 'Eco-Friendly', seller: 'Green Living KE', sellerRating: 4.9, description: 'Reusable organic beeswax food wraps - an eco-friendly alternative to plastic wrap. Made from organic cotton and sustainably sourced beeswax. Set of 5 in various sizes.', rating: 4.9, reviews: 189, stock: 45, images: [getProductImageSrc(2)], features: ['100% Organic Cotton', 'Reusable', 'Biodegradable', 'Set of 5'], specifications: { Material: 'Organic Cotton & Beeswax', Sizes: 'Small, Medium, Large', Care: 'Hand wash cold water' } },
+  { id: 3, name: 'Vintage Leather Journal', price: 6099, originalPrice: 8650, category: 'Vintage', seller: 'Heritage Crafts', sellerRating: 4.7, description: 'Authentic vintage-style leather journal with handmade paper. Features a leather strap closure and aged paper for a classic feel. Perfect for writers and artists.', rating: 4.8, reviews: 156, stock: 60, images: [getProductImageSrc(3)], features: ['Genuine Leather', 'Handmade Paper', '200 Pages', 'Strap Closure'], specifications: { Size: '6x8 inches', Pages: '200', Binding: 'Hand-stitched' } },
+  { id: 4, name: 'Artisan Coffee Blend - 500g', price: 4399, originalPrice: 5999, category: 'Food', seller: 'Kenyan Coffee Co.', sellerRating: 5.0, description: 'Premium artisan coffee blend sourced from the highlands of Kenya. Medium roast with notes of chocolate and citrus. Freshly roasted to order.', rating: 5.0, reviews: 312, stock: 30, images: [getProductImageSrc(4)], features: ['Single Origin', 'Medium Roast', 'Freshly Roasted', 'Fair Trade'], specifications: { Weight: '500g', Origin: 'Kenya Highlands', Roast: 'Medium' } },
   
   // Trending
-  { id: 5, name: 'Custom Macrame Wall Hanging', price: 10599, originalPrice: 14650, category: 'Home Decor', seller: 'Knot & Weave', sellerRating: 4.8, description: 'Beautiful custom macrame wall hanging, handcrafted using premium cotton cord. Adds a bohemian touch to any space. Can be customized in size and color.', rating: 4.8, reviews: 145, stock: 25, images: ['HD'], features: ['100% Cotton', 'Handcrafted', 'Custom Sizes', 'Boho Style'], specifications: { Material: 'Cotton Cord', Size: '24x36 inches', Weight: '800g' } },
-  { id: 6, name: 'Handmade Natural Soap Set', price: 3849, originalPrice: 5320, category: 'Wellness', seller: 'Natural Beauty Kenya', sellerRating: 4.9, description: 'Set of 6 handmade natural soaps using organic ingredients. Free from harsh chemicals and synthetic fragrances. Gentle on sensitive skin.', rating: 4.9, reviews: 267, stock: 80, images: ['WL'], features: ['All Natural', 'Chemical Free', 'Set of 6', 'Various Scents'], specifications: { Weight: '100g each', Ingredients: 'Organic oils & herbs', 'Shelf Life': '12 months' } },
+  { id: 5, name: 'Custom Macrame Wall Hanging', price: 10599, originalPrice: 14650, category: 'Home Decor', seller: 'Knot & Weave', sellerRating: 4.8, description: 'Beautiful custom macrame wall hanging, handcrafted using premium cotton cord. Adds a bohemian touch to any space. Can be customized in size and color.', rating: 4.8, reviews: 145, stock: 25, images: [getProductImageSrc(5)], features: ['100% Cotton', 'Handcrafted', 'Custom Sizes', 'Boho Style'], specifications: { Material: 'Cotton Cord', Size: '24x36 inches', Weight: '800g' } },
+  { id: 6, name: 'Handmade Natural Soap Set', price: 3849, originalPrice: 5320, category: 'Wellness', seller: 'Natural Beauty Kenya', sellerRating: 4.9, description: 'Set of 6 handmade natural soaps using organic ingredients. Free from harsh chemicals and synthetic fragrances. Gentle on sensitive skin.', rating: 4.9, reviews: 267, stock: 80, images: [getProductImageSrc(6)], features: ['All Natural', 'Chemical Free', 'Set of 6', 'Various Scents'], specifications: { Weight: '100g each', Ingredients: 'Organic oils & herbs', 'Shelf Life': '12 months' } },
 ];
 
 export default function ProductPage() {
@@ -247,9 +249,14 @@ export default function ProductPage() {
             {/* Product Images */}
             <div className="space-y-4">
               <div className="relative aspect-square bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] rounded-lg overflow-hidden border border-[var(--beige-300)]">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-6xl font-bold text-[var(--brown-600)]">{product.images[selectedImage]}</span>
-                </div>
+                {product.images[selectedImage] && (
+                  <Image
+                    src={product.images[selectedImage]}
+                    alt={product.name}
+                    fill
+                    className="object-cover"
+                  />
+                )}
                 
                 {/* Flash Sale Badge */}
                 {flashSale && (
