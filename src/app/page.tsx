@@ -3,14 +3,27 @@
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ActiveDeals from '@/components/ActiveDeals';
+import ProductRecommendations from '@/components/ProductRecommendations';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
+
+// Sample product data - in a real app, this would come from an API/database
+const allProducts = [
+  { id: 1, name: 'Handcrafted Silver Ring Set', price: 11999, originalPrice: 19500, category: 'Jewelry', seller: 'Artisan Metals Kenya', description: 'Beautiful handcrafted silver ring set', rating: 4.9, reviews: 234, stock: 50, images: ['JW'] },
+  { id: 2, name: 'Organic Beeswax Food Wraps', price: 3299, originalPrice: 4650, category: 'Eco-Friendly', seller: 'Green Living KE', description: 'Reusable organic beeswax food wraps', rating: 4.9, reviews: 189, stock: 45, images: ['EC'] },
+  { id: 3, name: 'Vintage Leather Journal', price: 6099, originalPrice: 8650, category: 'Vintage', seller: 'Heritage Crafts', description: 'Authentic vintage-style leather journal', rating: 4.8, reviews: 156, stock: 60, images: ['VG'] },
+  { id: 4, name: 'Artisan Coffee Blend - 500g', price: 4399, originalPrice: 5999, category: 'Food', seller: 'Kenyan Coffee Co.', description: 'Premium artisan coffee blend', rating: 5.0, reviews: 312, stock: 30, images: ['FD'] },
+  { id: 5, name: 'Custom Macrame Wall Hanging', price: 10599, originalPrice: 14650, category: 'Home Decor', seller: 'Knot & Weave', description: 'Beautiful custom macrame wall hanging', rating: 4.8, reviews: 145, stock: 25, images: ['HD'] },
+  { id: 6, name: 'Handmade Natural Soap Set', price: 3849, originalPrice: 5320, category: 'Wellness', seller: 'Natural Beauty Kenya', description: 'Set of 6 handmade natural soaps', rating: 4.9, reviews: 267, stock: 80, images: ['WL'] },
+];
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const [addedToCart, setAddedToCart] = useState<number | null>(null);
 
   useEffect(() => {
@@ -811,6 +824,34 @@ export default function Home() {
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Recommendations Section */}
+        <section className="py-12">
+          <div className="max-w-7xl mx-auto px-4 space-y-12">
+            <ProductRecommendations
+              type="trending"
+              allProducts={allProducts}
+              userId={user?.id}
+              limit={6}
+            />
+
+            {user?.id && (
+              <ProductRecommendations
+                type="personalized"
+                allProducts={allProducts}
+                userId={user.id}
+                limit={6}
+              />
+            )}
+
+            <ProductRecommendations
+              type="best_sellers"
+              allProducts={allProducts}
+              userId={user?.id}
+              limit={6}
+            />
           </div>
         </section>
       </main>
