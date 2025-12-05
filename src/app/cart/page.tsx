@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BackButton from '@/components/BackButton';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import SavedCarts from '@/components/SavedCarts';
@@ -115,8 +116,15 @@ export default function CartPage() {
                   >
                     <div className="flex gap-4 md:gap-6">
                       {/* Product Image */}
-                      <div className="flex-shrink-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] rounded-lg flex items-center justify-center">
-                        <span className="text-2xl md:text-3xl font-bold text-[var(--brown-600)]">{item.image}</span>
+                      <div className="flex-shrink-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] rounded-lg overflow-hidden relative">
+                        {item.image && (
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                          />
+                        )}
                       </div>
 
                       {/* Product Details */}

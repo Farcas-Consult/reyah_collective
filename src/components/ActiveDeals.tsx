@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getActiveDeals, updateSaleStatuses } from '@/utils/flashSaleUtils';
 import { ActiveDeal } from '@/types/flashSale';
 import CountdownTimer from './CountdownTimer';
@@ -117,10 +118,11 @@ export default function ActiveDeals() {
                         {/* Product Image */}
                         <div className="relative aspect-square bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] overflow-hidden">
                           {fullProduct?.image ? (
-                            <img
+                            <Image
                               src={fullProduct.image}
                               alt={product.productName}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              fill
+                              className="object-cover group-hover:scale-110 transition-transform duration-300"
                             />
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center text-[var(--brown-700)] text-xs p-2 text-center font-medium">

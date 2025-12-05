@@ -6,17 +6,22 @@ import ActiveDeals from '@/components/ActiveDeals';
 import ProductRecommendations from '@/components/ProductRecommendations';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
+import { getProductImageSrc, getProductImage } from '@/data/products';
+import HandmadeJewelry1 from '@/assets/HandmadeJewelry1.jpg';
+import Artisan1 from '@/assets/Artisan1.jpg';
+import Vintage1 from '@/assets/Vintage1.jpg';
 
 // Sample product data - in a real app, this would come from an API/database
 const allProducts = [
-  { id: 1, name: 'Handcrafted Silver Ring Set', price: 11999, originalPrice: 19500, category: 'Jewelry', seller: 'Artisan Metals Kenya', description: 'Beautiful handcrafted silver ring set', rating: 4.9, reviews: 234, stock: 50, images: ['JW'] },
-  { id: 2, name: 'Organic Beeswax Food Wraps', price: 3299, originalPrice: 4650, category: 'Eco-Friendly', seller: 'Green Living KE', description: 'Reusable organic beeswax food wraps', rating: 4.9, reviews: 189, stock: 45, images: ['EC'] },
-  { id: 3, name: 'Vintage Leather Journal', price: 6099, originalPrice: 8650, category: 'Vintage', seller: 'Heritage Crafts', description: 'Authentic vintage-style leather journal', rating: 4.8, reviews: 156, stock: 60, images: ['VG'] },
-  { id: 4, name: 'Artisan Coffee Blend - 500g', price: 4399, originalPrice: 5999, category: 'Food', seller: 'Kenyan Coffee Co.', description: 'Premium artisan coffee blend', rating: 5.0, reviews: 312, stock: 30, images: ['FD'] },
-  { id: 5, name: 'Custom Macrame Wall Hanging', price: 10599, originalPrice: 14650, category: 'Home Decor', seller: 'Knot & Weave', description: 'Beautiful custom macrame wall hanging', rating: 4.8, reviews: 145, stock: 25, images: ['HD'] },
-  { id: 6, name: 'Handmade Natural Soap Set', price: 3849, originalPrice: 5320, category: 'Wellness', seller: 'Natural Beauty Kenya', description: 'Set of 6 handmade natural soaps', rating: 4.9, reviews: 267, stock: 80, images: ['WL'] },
+  { id: 1, name: 'Handcrafted Silver Ring Set', price: 11999, originalPrice: 19500, category: 'Jewelry', seller: 'Artisan Metals Kenya', description: 'Beautiful handcrafted silver ring set', rating: 4.9, reviews: 234, stock: 50, images: [getProductImageSrc(1)] },
+  { id: 2, name: 'Organic Beeswax Food Wraps', price: 3299, originalPrice: 4650, category: 'Eco-Friendly', seller: 'Green Living KE', description: 'Reusable organic beeswax food wraps', rating: 4.9, reviews: 189, stock: 45, images: [getProductImageSrc(2)] },
+  { id: 3, name: 'Vintage Leather Journal', price: 6099, originalPrice: 8650, category: 'Vintage', seller: 'Heritage Crafts', description: 'Authentic vintage-style leather journal', rating: 4.8, reviews: 156, stock: 60, images: [getProductImageSrc(3)] },
+  { id: 4, name: 'Artisan Coffee Blend - 500g', price: 4399, originalPrice: 5999, category: 'Food', seller: 'Kenyan Coffee Co.', description: 'Premium artisan coffee blend', rating: 5.0, reviews: 312, stock: 30, images: [getProductImageSrc(4)] },
+  { id: 5, name: 'Custom Macrame Wall Hanging', price: 10599, originalPrice: 14650, category: 'Home Decor', seller: 'Knot & Weave', description: 'Beautiful custom macrame wall hanging', rating: 4.8, reviews: 145, stock: 25, images: [getProductImageSrc(5)] },
+  { id: 6, name: 'Handmade Natural Soap Set', price: 3849, originalPrice: 5320, category: 'Wellness', seller: 'Natural Beauty Kenya', description: 'Set of 6 handmade natural soaps', rating: 4.9, reviews: 267, stock: 80, images: [getProductImageSrc(6)] },
 ];
 
 export default function Home() {
@@ -91,7 +96,8 @@ export default function Home() {
       reviews: 234,
       sold: 156,
       stock: 50,
-      badge: 'Best Value'
+      badge: 'Best Value',
+      image: getProductImage(1)
     },
     {
       name: 'Organic Beeswax Food Wraps',
@@ -102,7 +108,8 @@ export default function Home() {
       reviews: 189,
       sold: 203,
       stock: 45,
-      badge: 'Eco-Friendly'
+      badge: 'Eco-Friendly',
+      image: getProductImage(2)
     },
     {
       name: 'Vintage Leather Journal',
@@ -113,7 +120,8 @@ export default function Home() {
       reviews: 156,
       sold: 134,
       stock: 60,
-      badge: 'Popular'
+      badge: 'Popular',
+      image: getProductImage(3)
     },
     {
       name: 'Artisan Coffee Blend - 500g',
@@ -124,32 +132,33 @@ export default function Home() {
       reviews: 312,
       sold: 289,
       stock: 30,
-      badge: 'Best Offer'
+      badge: 'Best Offer',
+      image: getProductImage(4)
     }
   ];
 
   const trendingProducts = [
-    { name: 'Custom Macrame Wall Hanging', price: 10599, originalPrice: 14650, discount: 27, rating: 4.8, badge: 'Trending' },
-    { name: 'Handmade Natural Soap Set', price: 3849, originalPrice: 5320, discount: 28, rating: 4.9, badge: 'Hot' },
-    { name: 'Vintage Ceramic Planter', price: 5699, originalPrice: 7980, discount: 28, rating: 4.7, badge: 'Best Seller' },
-    { name: 'DIY Embroidery Kit', price: 4779, originalPrice: 6650, discount: 28, rating: 4.9, badge: 'New' },
-    { name: 'Reusable Produce Bags (5 Pack)', price: 2519, originalPrice: 3724, discount: 32, rating: 4.8, badge: 'Sale' },
-    { name: 'Artisan Honey - Pure Raw', price: 3319, originalPrice: 4655, discount: 29, rating: 4.9, badge: 'Popular' }
+    { name: 'Custom Macrame Wall Hanging', price: 10599, originalPrice: 14650, discount: 27, rating: 4.8, badge: 'Trending', image: getProductImage(5) },
+    { name: 'Handmade Natural Soap Set', price: 3849, originalPrice: 5320, discount: 28, rating: 4.9, badge: 'Hot', image: getProductImage(6) },
+    { name: 'Vintage Ceramic Planter', price: 5699, originalPrice: 7980, discount: 28, rating: 4.7, badge: 'Best Seller', image: getProductImage('Vintage Ceramic Planter') },
+    { name: 'DIY Embroidery Kit', price: 4779, originalPrice: 6650, discount: 28, rating: 4.9, badge: 'New', image: getProductImage('DIY Embroidery Kit') },
+    { name: 'Reusable Produce Bags (5 Pack)', price: 2519, originalPrice: 3724, discount: 32, rating: 4.8, badge: 'Sale', image: getProductImage('Reusable Produce Bags (5 Pack)') },
+    { name: 'Artisan Honey - Pure Raw', price: 3319, originalPrice: 4655, discount: 29, rating: 4.9, badge: 'Popular', image: getProductImage('Artisan Honey - Pure Raw') }
   ];
 
   const showcaseImages = [
-    { title: 'Handcrafted Jewelry', category: 'Custom Designs' },
-    { title: 'Artisan Gallery', category: 'Original Art & Prints' },
-    { title: 'Vintage Treasures', category: 'Curated Finds' },
-    { title: 'Eco Collection', category: 'Sustainable Living' }
+    { title: 'Handcrafted Jewelry', category: 'Custom Designs', image: HandmadeJewelry1 },
+    { title: 'Artisan Gallery', category: 'Original Art & Prints', image: Artisan1 },
+    { title: 'Vintage Treasures', category: 'Curated Finds', image: Vintage1 },
+    { title: 'Eco Collection', category: 'Sustainable Living', image: getProductImage(6) }
   ];
 
-  const handleAddToCart = (product: { name: string; price: number }, id: number) => {
+  const handleAddToCart = (product: { name: string; price: number; id?: number }, id: number) => {
     addToCart({
       id,
       name: product.name,
       price: product.price,
-      image: product.name.substring(0, 2).toUpperCase(),
+      image: getProductImage(product.id || id),
       category: 'General',
       inStock: true
     });
@@ -329,99 +338,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Flash Sales Banner */}
-        <section className="bg-red-600 py-3">
-          <div className="container mx-auto px-4 max-w-7xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="text-white font-bold text-lg flex items-center gap-2">
-                  ⚡ Flash Sales | Live Now
-                </span>
-                <div className="hidden md:flex items-center gap-2 text-white">
-                  <span className="text-sm">Time Left:</span>
-                  <span className="bg-white text-red-600 px-2 py-1 rounded font-bold text-sm">10h</span>
-                  <span>:</span>
-                  <span className="bg-white text-red-600 px-2 py-1 rounded font-bold text-sm">35m</span>
-                  <span>:</span>
-                  <span className="bg-white text-red-600 px-2 py-1 rounded font-bold text-sm">59s</span>
-                </div>
-              </div>
-              <Link href="/shop" className="text-white font-semibold hover:underline text-sm flex items-center gap-1">
-                See All →
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Flash Deals Products */}
-        <section className="py-4 bg-white border-b border-gray-200">
-          <div className="container mx-auto px-4 max-w-7xl">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              {flashDeals.slice(0, 6).map((product, i) => (
-                <div
-                  key={i}
-                  className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-all duration-300"
-                >
-                  <Link href="/shop" className="relative block aspect-square overflow-hidden bg-gray-100">
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-400 p-4 text-center text-sm">
-                      {product.name}
-                    </div>
-                    <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded text-xs font-bold">
-                      -{product.discount}%
-                    </div>
-                  </Link>
-                  <div className="p-2">
-                    <div className="text-sm md:text-base font-bold text-[var(--accent)] mb-1">
-                      KSH {product.price.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-gray-500 line-through mb-2">
-                      KSH {product.originalPrice.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-gray-600 mb-1">{product.sold} sold</div>
-                    <div className="w-full bg-gray-200 rounded-full h-1">
-                      <div 
-                        className="bg-orange-500 h-1 rounded-full" 
-                        style={{ width: `${(product.sold / (product.sold + product.stock)) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Active Flash Deals Section */}
         <ActiveDeals />
-
-        {/* Categories Grid */}
-        <section className="py-6 bg-white border-b border-[var(--beige-300)]">
-          <div className="container mx-auto px-4 max-w-7xl">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-xl md:text-2xl font-bold text-[var(--brown-800)]">Shop by Category</h2>
-              <Link href="/shop" className="text-[var(--accent)] font-semibold hover:underline text-sm flex items-center gap-1">
-                See All
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-            <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
-              {categories.map((cat, i) => (
-                <Link
-                  key={i}
-                  href={cat.link}
-                  className="group bg-white border border-[var(--beige-300)] rounded-xl p-3 hover:shadow-lg hover:border-[var(--accent)] hover:-translate-y-1 transition-all duration-300"
-                >
-                  <div className="text-4xl mb-2 text-center">{cat.icon}</div>
-                  <p className="text-xs md:text-sm font-semibold text-center text-[var(--brown-700)] group-hover:text-[var(--accent)] transition-colors line-clamp-2 leading-tight">
-                    {cat.name}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* Flash Sales */}
         <section className="py-6 md:py-8 bg-gray-50">
@@ -454,9 +372,14 @@ export default function Home() {
                   style={{ transitionDelay: `${i * 50}ms` }}
                 >
                   <Link href={`/product/${i + 1}`} className="relative block aspect-square overflow-hidden bg-[var(--beige-200)]">
-                    <div className="absolute inset-0 flex items-center justify-center text-[var(--brown-700)] p-4 text-center text-sm">
-                      {product.name}
-                    </div>
+                    {product.image && (
+                      <Image
+                        src={product.image}
+                        alt={product.name}
+                        fill
+                        className="object-cover"
+                      />
+                    )}
                     <div className="absolute top-2 left-2 bg-[var(--accent)] text-white px-2 py-1 rounded text-xs font-bold shadow-md">
                       -{product.discount}%
                     </div>
@@ -573,9 +496,12 @@ export default function Home() {
                   style={{ transitionDelay: `${i * 40}ms` }}
                 >
                   <Link href={`/product/${i + 5}`} className="relative block aspect-square overflow-hidden bg-[var(--beige-200)]">
-                    <div className="absolute inset-0 flex items-center justify-center text-[var(--brown-700)] p-2 text-center text-xs">
-                      {product.name}
-                    </div>
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
                     {product.discount > 0 && (
                       <div className="absolute top-2 left-2 bg-red-600 text-white px-1.5 py-0.5 rounded text-xs font-bold">
                         -{product.discount}%
@@ -643,11 +569,17 @@ export default function Home() {
                 <Link
                   key={i}
                   href="/shop"
-                  className={`group relative h-48 md:h-56 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-[var(--beige-300)] bg-gradient-to-br from-[var(--beige-200)] to-[var(--beige-300)] ${
+                  className={`group relative h-48 md:h-56 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer border border-[var(--beige-300)] ${
                     isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}
                   style={{ transitionDelay: `${i * 60}ms` }}
                 >
+                  <Image
+                    src={item.image}
+                    alt={item.title}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-300"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent">
                     <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
                       <h4 className="text-white font-bold text-sm md:text-base mb-1">{item.title}</h4>
@@ -670,25 +602,32 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Handmade Jewelry */}
               <div className="bg-[var(--beige-50)] rounded-lg border border-[var(--beige-300)] overflow-hidden hover:shadow-lg transition-all duration-300">
-                <div className="p-4 bg-gradient-to-r from-[var(--beige-200)] to-[var(--beige-100)]">
-                  <h3 className="text-lg font-bold text-[var(--brown-800)] mb-2">
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={HandmadeJewelry1}
+                    alt="Handmade Jewelry"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <h3 className="absolute bottom-4 left-4 text-xl font-bold text-white">
                     Handmade Jewelry
                   </h3>
                 </div>
                 <div className="p-4 space-y-2">
-                  <Link href="/shop?category=rings" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Handmade Jewelry" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Custom Rings
                   </Link>
-                  <Link href="/shop?category=necklaces" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Handmade Jewelry" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Necklaces & Pendants
                   </Link>
-                  <Link href="/shop?category=earrings" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Handmade Jewelry" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Earrings
                   </Link>
-                  <Link href="/shop?category=bracelets" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Handmade Jewelry" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Bracelets
                   </Link>
-                  <Link href="/shop?category=jewelry" className="block text-sm font-semibold text-[var(--accent)] hover:underline mt-3">
+                  <Link href="/shop?category=Handmade Jewelry" className="block text-sm font-semibold text-[var(--accent)] hover:underline mt-3">
                     View All Jewelry →
                   </Link>
                 </div>
@@ -696,25 +635,32 @@ export default function Home() {
 
               {/* Artisan Home Decor */}
               <div className="bg-[var(--beige-50)] rounded-lg border border-[var(--beige-300)] overflow-hidden hover:shadow-lg transition-all duration-300">
-                <div className="p-4 bg-gradient-to-r from-[var(--beige-200)] to-[var(--beige-100)]">
-                  <h3 className="text-lg font-bold text-[var(--brown-800)] mb-2">
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={Artisan1}
+                    alt="Artisan Home Decor"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <h3 className="absolute bottom-4 left-4 text-xl font-bold text-white">
                     Artisan Home Decor
                   </h3>
                 </div>
                 <div className="p-4 space-y-2">
-                  <Link href="/shop?category=ceramics" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Artisan Home Decor" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Handmade Ceramics
                   </Link>
-                  <Link href="/shop?category=wall-art" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Artisan Home Decor" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Wall Art & Hangings
                   </Link>
-                  <Link href="/shop?category=candles" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Artisan Home Decor" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Artisan Candles
                   </Link>
-                  <Link href="/shop?category=furniture" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Artisan Home Decor" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Handmade Furniture
                   </Link>
-                  <Link href="/shop?category=home-decor" className="block text-sm font-semibold text-[var(--accent)] hover:underline mt-3">
+                  <Link href="/shop?category=Artisan Home Decor" className="block text-sm font-semibold text-[var(--accent)] hover:underline mt-3">
                     View All Home Decor →
                   </Link>
                 </div>
@@ -722,25 +668,32 @@ export default function Home() {
 
               {/* Vintage & Antiques */}
               <div className="bg-[var(--beige-50)] rounded-lg border border-[var(--beige-300)] overflow-hidden hover:shadow-lg transition-all duration-300">
-                <div className="p-4 bg-gradient-to-r from-[var(--beige-200)] to-[var(--beige-100)]">
-                  <h3 className="text-lg font-bold text-[var(--brown-800)] mb-2">
+                <div className="relative h-48 overflow-hidden">
+                  <Image
+                    src={Vintage1}
+                    alt="Vintage and Antiques"
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                  <h3 className="absolute bottom-4 left-4 text-xl font-bold text-white">
                     Vintage & Antiques
                   </h3>
                 </div>
                 <div className="p-4 space-y-2">
-                  <Link href="/shop?category=vintage-clothing" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Vintage and Antiques" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Vintage Clothing
                   </Link>
-                  <Link href="/shop?category=antique-furniture" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Vintage and Antiques" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Antique Furniture
                   </Link>
-                  <Link href="/shop?category=collectibles" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Vintage and Antiques" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Collectibles
                   </Link>
-                  <Link href="/shop?category=rare-books" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
+                  <Link href="/shop?category=Vintage and Antiques" className="block text-sm text-[var(--brown-700)] hover:text-[var(--accent)] hover:translate-x-1 transition-all">
                     → Rare Books
                   </Link>
-                  <Link href="/shop?category=vintage" className="block text-sm font-semibold text-[var(--accent)] hover:underline mt-3">
+                  <Link href="/shop?category=Vintage and Antiques" className="block text-sm font-semibold text-[var(--accent)] hover:underline mt-3">
                     View All Vintage →
                   </Link>
                 </div>

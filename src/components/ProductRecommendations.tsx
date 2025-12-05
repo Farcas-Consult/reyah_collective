@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { RecommendationSet, RecommendationType } from '@/types/recommendations';
 import { getRecommendations, trackRecommendationImpression, trackRecommendationClick } from '@/utils/recommendationEngine';
 
@@ -143,10 +144,11 @@ function RecommendationCard({ product, showReasons, onClick }: RecommendationCar
       {/* Product Image */}
       <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center overflow-hidden">
         {product.image ? (
-          <img
+          <Image
             src={product.image}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+            fill
+            className="object-cover group-hover:scale-110 transition-transform duration-300"
           />
         ) : (
           <span className="text-4xl md:text-6xl font-bold text-gray-400">

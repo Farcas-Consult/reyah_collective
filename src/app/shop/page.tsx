@@ -13,6 +13,7 @@ import { addToComparison, isInComparison, removeFromComparison } from '@/utils/c
 import { searchAndFilterProducts, sortSearchResults, paginateResults, extractFilterOptions } from '@/utils/search';
 import AddToWishlistButton from '@/components/AddToWishlistButton';
 import Link from 'next/link';
+import Image from 'next/image';
 import StarRating from '@/components/StarRating';
 import FlashSaleBadge from '@/components/FlashSaleBadge';
 import WholesaleBadge from '@/components/WholesaleBadge';
@@ -21,6 +22,8 @@ import { getProductPricingRules } from '@/utils/wholesaleUtils';
 import type { SearchFilters, SortOption } from '@/types/search';
 import type { FlashSale } from '@/types/flashSale';
 import type { BulkPricingRule } from '@/types/wholesale';
+import { getProductImageSrc, getProductImage } from '@/data/products';
+import { DATA_SYNC_EVENTS, onDataSync } from '@/utils/dataSync';
 
 function ShopContent() {
   const searchParams = useSearchParams();
@@ -66,28 +69,31 @@ function ShopContent() {
       // Default products if no admin products exist
       const defaultProducts = [
         // Handmade Jewelry
-        { id: 1, name: 'Handcrafted Silver Ring Set', price: 11999, category: 'Jewelry', brand: 'Artisan Metals', tags: ['silver', 'ring', 'handmade', 'jewelry'], image: '', stock: 10 },
-        { id: 2, name: 'Beaded Necklace with Pendant', price: 8645, category: 'Jewelry', brand: 'Artisan Metals', tags: ['beads', 'necklace', 'pendant', 'jewelry'], image: '', stock: 15 },
-        { id: 3, name: 'Custom Copper Earrings', price: 5717, category: 'Jewelry', brand: 'Copper Craft', tags: ['copper', 'earrings', 'custom', 'jewelry'], image: '', stock: 8 },
-        { id: 4, name: 'Leather Wrap Bracelet', price: 5120, category: 'Jewelry', brand: 'Leather Works', tags: ['leather', 'bracelet', 'wrap', 'jewelry'], image: '', stock: 12 },
+        { id: 1, name: 'Handcrafted Silver Ring Set', price: 11999, category: 'Handmade Jewelry', brand: 'Artisan Metals', tags: ['silver', 'ring', 'handmade', 'jewelry'], image: getProductImageSrc(1), stock: 10 },
+        { id: 2, name: 'Beaded Necklace with Pendant', price: 8645, category: 'Handmade Jewelry', brand: 'Artisan Metals', tags: ['beads', 'necklace', 'pendant', 'jewelry'], image: getProductImageSrc('Beaded Necklace with Pendant'), stock: 15 },
+        { id: 3, name: 'Custom Copper Earrings', price: 5717, category: 'Handmade Jewelry', brand: 'Copper Craft', tags: ['copper', 'earrings', 'custom', 'jewelry'], image: getProductImageSrc('Custom Copper Earrings'), stock: 8 },
+        { id: 4, name: 'Leather Wrap Bracelet', price: 5120, category: 'Handmade Jewelry', brand: 'Leather Works', tags: ['leather', 'bracelet', 'wrap', 'jewelry'], image: getProductImageSrc('Leather Wrap Bracelet'), stock: 12 },
+        { id: 5, name: 'Gemstone Pendant Necklace', price: 9200, category: 'Handmade Jewelry', brand: 'Gem Artisans', tags: ['gemstone', 'pendant', 'necklace', 'jewelry'], image: getProductImageSrc('Gemstone Pendant Necklace'), stock: 6 },
 
         // Artisan Home Decor
-        { id: 5, name: 'Custom Macrame Wall Hanging', price: 10639, category: 'Home Decor', brand: 'Knot & Weave', tags: ['macrame', 'wall hanging', 'decor', 'handmade'], image: '', stock: 5 },
-        { id: 6, name: 'Hand-Painted Ceramic Vase', price: 7314, category: 'Home Decor', brand: 'Pottery Studio', tags: ['ceramic', 'vase', 'painted', 'pottery'], image: '', stock: 7 },
-        { id: 7, name: 'Artisan Scented Candle Set', price: 5985, salePrice: 4788, category: 'Home Decor', brand: 'Wax & Wick', tags: ['candles', 'scented', 'artisan', 'set'], image: '', stock: 20 },
-        { id: 8, name: 'Handwoven Throw Pillow', price: 4387, category: 'Home Decor', brand: 'Textile Art', tags: ['pillow', 'woven', 'throw', 'textile'], image: '', stock: 14 },
+        { id: 6, name: 'Custom Macrame Wall Hanging', price: 10639, category: 'Artisan Home Decor', brand: 'Knot & Weave', tags: ['macrame', 'wall hanging', 'decor', 'handmade'], image: getProductImageSrc(5), stock: 5 },
+        { id: 7, name: 'Hand-Painted Ceramic Vase', price: 7314, category: 'Artisan Home Decor', brand: 'Pottery Studio', tags: ['ceramic', 'vase', 'painted', 'pottery'], image: getProductImageSrc('Hand-Painted Ceramic Vase'), stock: 7 },
+        { id: 8, name: 'Artisan Scented Candle Set', price: 5985, salePrice: 4788, category: 'Artisan Home Decor', brand: 'Wax & Wick', tags: ['candles', 'scented', 'artisan', 'set'], image: getProductImageSrc('Artisan Scented Candle Set'), stock: 20 },
+        { id: 9, name: 'Handwoven Throw Pillow', price: 4387, category: 'Artisan Home Decor', brand: 'Textile Art', tags: ['pillow', 'woven', 'throw', 'textile'], image: getProductImageSrc('Handwoven Throw Pillow'), stock: 14 },
+        { id: 10, name: 'Wooden Wall Art Panel', price: 8500, category: 'Artisan Home Decor', brand: 'Wood Craft Studio', tags: ['wooden', 'wall art', 'panel', 'decor'], image: getProductImageSrc('Wooden Wall Art Panel'), stock: 8 },
 
         // Vintage & Antiques
-        { id: 9, name: 'Vintage Leather Journal', price: 6117, category: 'Vintage', brand: 'Vintage Finds', tags: ['vintage', 'leather', 'journal', 'notebook'], image: '', stock: 6 },
-        { id: 10, name: 'Antique Brass Candlestick', price: 9044, category: 'Vintage', brand: 'Antique Collection', tags: ['antique', 'brass', 'candlestick', 'vintage'], image: '', stock: 3 },
-        { id: 11, name: 'Vintage Ceramic Planter', price: 5717, salePrice: 4574, category: 'Vintage', brand: 'Vintage Garden', tags: ['vintage', 'ceramic', 'planter', 'pot'], image: '', stock: 9 },
-        { id: 12, name: 'Retro Wooden Photo Frame', price: 3791, category: 'Vintage', brand: 'Retro Memories', tags: ['retro', 'wooden', 'frame', 'photo'], image: '', stock: 18 },
+        { id: 11, name: 'Vintage Leather Journal', price: 6117, category: 'Vintage and Antiques', brand: 'Vintage Finds', tags: ['vintage', 'leather', 'journal', 'notebook'], image: getProductImageSrc(3), stock: 6 },
+        { id: 12, name: 'Antique Brass Candlestick', price: 9044, category: 'Vintage and Antiques', brand: 'Antique Collection', tags: ['antique', 'brass', 'candlestick', 'vintage'], image: getProductImageSrc('Antique Brass Candlestick'), stock: 3 },
+        { id: 13, name: 'Vintage Ceramic Planter', price: 5717, salePrice: 4574, category: 'Vintage and Antiques', brand: 'Vintage Garden', tags: ['vintage', 'ceramic', 'planter', 'pot'], image: getProductImageSrc('Vintage Ceramic Planter'), stock: 9 },
+        { id: 14, name: 'Retro Wooden Photo Frame', price: 3791, category: 'Vintage and Antiques', brand: 'Retro Memories', tags: ['retro', 'wooden', 'frame', 'photo'], image: getProductImageSrc('Retro Wooden Photo Frame'), stock: 18 },
+        { id: 15, name: 'Antique Clock', price: 12500, category: 'Vintage and Antiques', brand: 'Timeless Treasures', tags: ['antique', 'clock', 'vintage', 'timepiece'], image: getProductImageSrc('Antique Clock'), stock: 4 },
 
         // Eco-Friendly Products
-        { id: 21, name: 'Organic Beeswax Food Wraps', price: 3324, category: 'Eco-Friendly', brand: 'Green Living', tags: ['beeswax', 'food wrap', 'eco', 'zero waste'], image: '', stock: 25 },
-        { id: 22, name: 'Reusable Produce Bags (5 Pack)', price: 2526, salePrice: 2021, category: 'Eco-Friendly', brand: 'Eco Essentials', tags: ['reusable', 'bags', 'produce', 'eco'], image: '', stock: 30 },
-        { id: 23, name: 'Handmade Natural Soap Set', price: 3856, category: 'Eco-Friendly', brand: 'Natural Bath', tags: ['soap', 'natural', 'handmade', 'organic'], image: '', stock: 22 },
-        { id: 24, name: 'Bamboo Cutlery Set', price: 2993, category: 'Eco-Friendly', brand: 'Bamboo Goods', tags: ['bamboo', 'cutlery', 'eco', 'sustainable'], image: '', stock: 16 },
+        { id: 21, name: 'Organic Beeswax Food Wraps', price: 3324, category: 'Eco-Friendly', brand: 'Green Living', tags: ['beeswax', 'food wrap', 'eco', 'zero waste'], image: getProductImageSrc(2), stock: 25 },
+        { id: 22, name: 'Reusable Produce Bags (5 Pack)', price: 2526, salePrice: 2021, category: 'Eco-Friendly', brand: 'Eco Essentials', tags: ['reusable', 'bags', 'produce', 'eco'], image: getProductImageSrc('Reusable Produce Bags (5 Pack)'), stock: 30 },
+        { id: 23, name: 'Handmade Natural Soap Set', price: 3856, category: 'Eco-Friendly', brand: 'Natural Bath', tags: ['soap', 'natural', 'handmade', 'organic'], image: getProductImageSrc(6), stock: 22 },
+        { id: 24, name: 'Bamboo Cutlery Set', price: 2993, category: 'Eco-Friendly', brand: 'Bamboo Goods', tags: ['bamboo', 'cutlery', 'eco', 'sustainable'], image: getProductImageSrc('Bamboo Cutlery Set'), stock: 16 },
       ];
 
       // Merge admin products with default products, converting admin product structure
@@ -188,6 +194,30 @@ function ShopContent() {
     return () => clearInterval(interval);
   }, [allProducts]);
 
+  // Listen for data sync events
+  useEffect(() => {
+    const cleanup = onDataSync(DATA_SYNC_EVENTS.PRODUCTS_UPDATED, () => {
+      // Reload products when they're updated
+      const adminProducts = JSON.parse(localStorage.getItem('reyah_products') || '[]');
+      const users = JSON.parse(localStorage.getItem('reyah_users') || '[]');
+      
+      const sellerProducts = users
+        .filter((user: any) => user.role === 'seller' && user.products)
+        .flatMap((seller: any) => 
+          seller.products.map((product: any) => ({
+            ...product,
+            sellerName: seller.businessName || `${seller.firstName} ${seller.lastName}`,
+            sellerRating: seller.rating || 0
+          }))
+        );
+
+      const combined = adminProducts.length > 0 ? [...adminProducts, ...sellerProducts] : allProducts;
+      setAllProducts(combined);
+    });
+    
+    return cleanup;
+  }, []);
+
   // Apply filters, search, and sorting
   useEffect(() => {
     // Search and filter products
@@ -233,7 +263,7 @@ function ShopContent() {
       id: product.id,
       name: product.name,
       price: priceToUse,
-      image: product.image || product.category.substring(0, 2).toUpperCase(),
+      image: product.image || getProductImage(product.id) || getProductImage(product.name),
       category: product.category,
       inStock: product.stock > 0 || true
     });
@@ -382,10 +412,11 @@ function ShopContent() {
                     <div key={product.id} className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-shadow border border-[var(--beige-300)]">
                       <Link href={`/product/${product.id}`} className="relative block aspect-square bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] overflow-hidden">
                         {product.image ? (
-                          <img
+                          <Image
                             src={product.image}
                             alt={product.name}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                           />
                         ) : (
                           <div className="absolute inset-0 flex items-center justify-center text-[var(--brown-700)] text-sm p-4 text-center font-medium">

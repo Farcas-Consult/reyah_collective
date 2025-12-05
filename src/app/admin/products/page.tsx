@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import BackButton from '@/components/BackButton';
+import { saveProductsWithSync } from '@/utils/dataSync';
 
 interface Product {
   id: number;
@@ -119,7 +120,7 @@ export default function AdminProductsPage() {
     };
 
     const updatedProducts = [...products, newProduct];
-    localStorage.setItem('reyah_products', JSON.stringify(updatedProducts));
+    saveProductsWithSync(updatedProducts);
     setProducts(updatedProducts);
     setShowAddModal(false);
     resetForm();
@@ -134,7 +135,7 @@ export default function AdminProductsPage() {
         : p
     );
 
-    localStorage.setItem('reyah_products', JSON.stringify(updatedProducts));
+    saveProductsWithSync(updatedProducts);
     setProducts(updatedProducts);
     setEditingProduct(null);
     resetForm();
@@ -143,7 +144,7 @@ export default function AdminProductsPage() {
   const handleDeleteProduct = (id: number) => {
     if (confirm('Are you sure you want to delete this product?')) {
       const updatedProducts = products.filter((p) => p.id !== id);
-      localStorage.setItem('reyah_products', JSON.stringify(updatedProducts));
+      saveProductsWithSync(updatedProducts);
       setProducts(updatedProducts);
     }
   };

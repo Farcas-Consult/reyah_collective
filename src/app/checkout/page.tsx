@@ -8,6 +8,7 @@ import BackButton from '@/components/BackButton';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import Image from 'next/image';
 import { saveOrder, generateOrderNumber, generateTrackingNumber, sendOrderConfirmationEmail } from '@/utils/orders';
 import { awardPurchasePoints, getActiveRedeemedRewards, validateRewardCode, markRewardAsUsed } from '@/utils/loyalty';
 import { RedeemedReward } from '@/types/loyalty';
@@ -523,8 +524,15 @@ export default function CheckoutPage() {
                 <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex gap-3 pb-4 border-b border-[var(--beige-300)]">
-                      <div className="w-16 h-16 bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] rounded flex items-center justify-center flex-shrink-0">
-                        <span className="text-lg font-bold text-[var(--brown-600)]">{item.image}</span>
+                      <div className="w-16 h-16 bg-gradient-to-br from-[var(--beige-100)] to-[var(--beige-200)] rounded overflow-hidden flex-shrink-0 relative">
+                        {item.image && (
+                          <Image
+                            src={item.image}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                          />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-[var(--brown-800)] line-clamp-2">{item.name}</p>
