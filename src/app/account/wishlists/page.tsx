@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import WishlistCard from '@/components/WishlistCard';
+import BackButton from '@/components/BackButton';
 import { getUserWishlists, createWishlist } from '@/utils/wishlist';
 import { Wishlist, RegistryType } from '@/types/wishlist';
 
@@ -76,7 +77,8 @@ export default function WishlistsPage() {
   return (
     <div className="bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-32 pb-12 px-4">
+        <BackButton />
+      <main className="pt-40 pb-12 px-4">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">

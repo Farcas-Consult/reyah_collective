@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
+import BackButton from '@/components/BackButton';
+
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
@@ -28,7 +30,8 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-24 pb-12 px-6">
+      <BackButton />
+      <main className="pt-40 pb-12 px-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl font-bold text-[var(--brown-800)] mb-8">Get in Touch</h1>
           

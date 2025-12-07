@@ -700,7 +700,8 @@ export default function Home() {
 
               {/* Crafts & DIY */}
               <div className="bg-[var(--beige-50)] rounded-lg border border-[var(--beige-300)] overflow-hidden hover:shadow-lg transition-all duration-300">
-                <div className="p-4 bg-gradient-to-r from-[var(--beige-200)] to-[var(--beige-100)]">
+                <div className="p-4 bg-gradient-to-r from-[var(--beige-200)] to-[var(--beige-100)] flex items-center">
+                  <Image src={require('@/assets/Craft1.jpg')} alt="Crafts & DIY" width={80} height={80} className="w-20 h-20 object-cover rounded-lg mr-4" />
                   <h3 className="text-lg font-bold text-[var(--brown-800)] mb-2">
                     Crafts & DIY
                   </h3>
@@ -726,7 +727,8 @@ export default function Home() {
 
               {/* Eco-Friendly Products */}
               <div className="bg-[var(--beige-50)] rounded-lg border border-[var(--beige-300)] overflow-hidden hover:shadow-lg transition-all duration-300">
-                <div className="p-4 bg-gradient-to-r from-[var(--beige-200)] to-[var(--beige-100)]">
+                <div className="p-4 bg-gradient-to-r from-[var(--beige-200)] to-[var(--beige-100)] flex items-center">
+                  <Image src={require('@/assets/Ecofriendly1.jpg')} alt="Eco-Friendly Products" width={80} height={80} className="w-20 h-20 object-cover rounded-lg mr-4" />
                   <h3 className="text-lg font-bold text-[var(--brown-800)] mb-2">
                     Eco-Friendly Products
                   </h3>

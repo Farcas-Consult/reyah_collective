@@ -514,6 +514,21 @@ export default function AdminFlashSalesPage() {
           )}
 
           {/* Sales List */}
+          {/* All Products List (names only) */}
+          <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] mb-8 p-6">
+            <h2 className="text-xl font-bold text-[var(--brown-800)] mb-4">All Products</h2>
+            {allProducts.length === 0 ? (
+              <p className="text-gray-500">No products available</p>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {allProducts.map((product) => (
+                  <span key={product.id} className="px-3 py-1 bg-[var(--beige-200)] rounded text-[var(--brown-800)] text-sm">
+                    {product.name}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)]">
             {filteredSales.length === 0 ? (
               <div className="p-12 text-center">

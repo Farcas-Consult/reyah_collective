@@ -239,7 +239,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-[var(--beige-100)]">
         <Header />
-        <main className="pt-32 pb-12 px-4">
+        <main className="pt-40 pb-12 px-4">
           <div className="max-w-4xl mx-auto text-center">
             <BackButton />
             <svg className="w-24 h-24 mx-auto mb-4 text-[var(--beige-300)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,7 +261,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-[var(--beige-100)]">
         <Header />
-        <main className="pt-32 pb-12 px-4">
+        <main className="pt-40 pb-12 px-4">
           <div className="max-w-2xl mx-auto text-center">
             <div className="bg-white rounded-lg shadow-lg border border-[var(--beige-300)] p-12">
               <svg className="w-24 h-24 mx-auto mb-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
@@ -309,7 +309,7 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-32 pb-12 px-4">
+      <main className="pt-40 pb-12 px-4">
         <div className="max-w-7xl mx-auto">
           <BackButton />
           <h1 className="text-3xl md:text-4xl font-bold text-[var(--brown-800)] mb-8">Checkout</h1>

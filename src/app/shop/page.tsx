@@ -75,6 +75,13 @@ function ShopContent() {
         { id: 4, name: 'Leather Wrap Bracelet', price: 5120, category: 'Handmade Jewelry', brand: 'Leather Works', tags: ['leather', 'bracelet', 'wrap', 'jewelry'], image: getProductImageSrc('Leather Wrap Bracelet'), stock: 12 },
         { id: 5, name: 'Gemstone Pendant Necklace', price: 9200, category: 'Handmade Jewelry', brand: 'Gem Artisans', tags: ['gemstone', 'pendant', 'necklace', 'jewelry'], image: getProductImageSrc('Gemstone Pendant Necklace'), stock: 6 },
 
+        // Crafts & DIY
+        { id: 101, name: 'DIY Craft Kit', price: 3499, category: 'Crafts & DIY', brand: 'Craft Studio', tags: ['craft', 'kit', 'diy', 'crafts'], image: getProductImageSrc('CraftKit1'), stock: 20 },
+        { id: 102, name: 'Embroidery Kits Bundle', price: 2899, category: 'Crafts & DIY', brand: 'Stitch & Sew', tags: ['embroidery', 'kit', 'diy', 'crafts'], image: getProductImageSrc('EmbroideryKits1'), stock: 18 },
+        { id: 103, name: 'Art Supplies Starter Set', price: 4199, category: 'Crafts & DIY', brand: 'Art Essentials', tags: ['art', 'supplies', 'diy', 'crafts'], image: getProductImageSrc('ArtSupplies1'), stock: 15 },
+        { id: 104, name: 'Creative DIY Bundle', price: 1999, category: 'Crafts & DIY', brand: 'Creative Hands', tags: ['creative', 'bundle', 'diy', 'crafts'], image: getProductImageSrc('Crraft5'), stock: 25 },
+        { id: 105, name: 'Macrame Wall Hanging', price: 3799, category: 'Crafts & DIY', brand: 'Knot & Weave', tags: ['macrame', 'wall', 'hanging', 'diy', 'crafts'], image: getProductImageSrc('CustomMacrameWallHanging'), stock: 12 },
+
         // Artisan Home Decor
         { id: 6, name: 'Custom Macrame Wall Hanging', price: 10639, category: 'Artisan Home Decor', brand: 'Knot & Weave', tags: ['macrame', 'wall hanging', 'decor', 'handmade'], image: getProductImageSrc(5), stock: 5 },
         { id: 7, name: 'Hand-Painted Ceramic Vase', price: 7314, category: 'Artisan Home Decor', brand: 'Pottery Studio', tags: ['ceramic', 'vase', 'painted', 'pottery'], image: getProductImageSrc('Hand-Painted Ceramic Vase'), stock: 7 },
@@ -299,7 +306,7 @@ function ShopContent() {
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-32 pb-12 px-4 md:px-6">
+      <main className="pt-40 pb-12 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
           <BackButton />
           
@@ -639,7 +646,7 @@ export default function ShopPage() {
     <Suspense fallback={
       <div className="min-h-screen bg-[var(--beige-100)]">
         <Header />
-        <main className="pt-32 pb-12 px-6">
+        <main className="pt-40 pb-12 px-6">
           <div className="max-w-7xl mx-auto text-center">
             <p className="text-gray-600">Loading products...</p>
           </div>

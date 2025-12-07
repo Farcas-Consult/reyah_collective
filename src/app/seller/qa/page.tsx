@@ -128,7 +128,7 @@ export default function SellerQAPage() {
   return (
     <div className="bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-32 pb-12 px-4">
+      <main className="pt-40 pb-12 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div>

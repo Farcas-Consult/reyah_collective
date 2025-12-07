@@ -58,7 +58,7 @@ export default function OrderDetailsPage() {
     return (
       <div className="min-h-screen bg-[var(--beige-100)]">
         <Header />
-        <main className="pt-32 pb-12 px-4">
+        <main className="pt-40 pb-12 px-4">
           <div className="max-w-4xl mx-auto text-center">
             <p className="text-[var(--brown-700)]">Loading order details...</p>
           </div>
@@ -72,7 +72,7 @@ export default function OrderDetailsPage() {
     return (
       <div className="min-h-screen bg-[var(--beige-100)]">
         <Header />
-        <main className="pt-32 pb-12 px-4">
+        <main className="pt-40 pb-12 px-4">
           <div className="max-w-4xl mx-auto text-center">
             <BackButton />
             <svg className="w-24 h-24 mx-auto mb-4 text-[var(--beige-300)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,7 +100,7 @@ export default function OrderDetailsPage() {
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-32 pb-12 px-4">
+      <main className="pt-40 pb-12 px-4">
         <div className="max-w-5xl mx-auto">
           <BackButton />
 

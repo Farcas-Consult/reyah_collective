@@ -330,7 +330,8 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Delivery Info Bar - Attractive & Extended */}
+
+      {/* Delivery Info Bar - Now inside header, below navigation */}
       <div className="bg-gradient-to-r from-[var(--accent)] via-[var(--brown-600)] to-[var(--accent)] text-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-center gap-8 py-3 text-sm font-medium overflow-x-auto">

@@ -157,7 +157,7 @@ export default function ProductPage() {
     return (
       <div className="min-h-screen bg-[var(--beige-100)]">
         <Header />
-        <main className="pt-32 pb-12 px-4">
+        <main className="pt-40 pb-12 px-4">
           <div className="max-w-7xl mx-auto text-center">
             <h1 className="text-3xl font-bold text-[var(--brown-800)] mb-4">Product Not Found</h1>
             <Link href="/shop" className="text-[var(--accent)] hover:underline">
@@ -241,7 +241,7 @@ export default function ProductPage() {
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-32 pb-12 px-4">
+      <main className="pt-40 pb-12 px-4">
         <div className="max-w-7xl mx-auto">
           <BackButton />
 
