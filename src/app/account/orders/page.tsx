@@ -72,7 +72,7 @@ export default function OrdersPage() {
     return (
       <div className="min-h-screen bg-[var(--beige-100)]">
         <Header />
-        <main className="pt-32 pb-12 px-4">
+        <main className="pt-40 pb-12 px-4">
           <div className="max-w-6xl mx-auto text-center">
             <p className="text-[var(--brown-700)]">Loading your orders...</p>
           </div>
@@ -85,7 +85,7 @@ export default function OrdersPage() {
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-32 pb-12 px-4">
+      <main className="pt-40 pb-12 px-4">
         <div className="max-w-6xl mx-auto">
           <BackButton />
           

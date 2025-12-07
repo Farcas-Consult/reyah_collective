@@ -2,6 +2,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 
+import BackButton from '@/components/BackButton';
+
 const collections = [
   {
     id: 1,
@@ -33,7 +35,8 @@ export default function CollectionsPage() {
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-24 pb-12 px-6">
+      <BackButton />
+      <main className="pt-40 pb-12 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-12">
             <h1 className="text-5xl font-bold text-[var(--brown-800)] mb-4">Our Collections</h1>

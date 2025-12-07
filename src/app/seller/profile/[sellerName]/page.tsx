@@ -91,7 +91,7 @@ export default function SellerProfilePage() {
     return (
       <div className="min-h-screen bg-[var(--beige-100)]">
         <Header />
-        <main className="pt-32 pb-12 px-4">
+        <main className="pt-40 pb-12 px-4">
           <div className="max-w-6xl mx-auto text-center">
             <p className="text-[var(--brown-700)]">Loading seller profile...</p>
           </div>
@@ -105,7 +105,7 @@ export default function SellerProfilePage() {
     return (
       <div className="min-h-screen bg-[var(--beige-100)]">
         <Header />
-        <main className="pt-32 pb-12 px-4">
+        <main className="pt-40 pb-12 px-4">
           <div className="max-w-6xl mx-auto">
             <BackButton />
             <div className="bg-white rounded-lg shadow-sm border border-[var(--beige-300)] p-12 text-center">
@@ -128,7 +128,7 @@ export default function SellerProfilePage() {
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-32 pb-12 px-4">
+      <main className="pt-40 pb-12 px-4">
         <div className="max-w-6xl mx-auto">
           <BackButton />
           

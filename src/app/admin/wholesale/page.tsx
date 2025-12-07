@@ -184,7 +184,7 @@ export default function AdminWholesalePage() {
   return (
     <div className="min-h-screen bg-[var(--beige-100)]">
       <Header />
-      <main className="pt-32 pb-12 px-4 md:px-6">
+      <main className="pt-40 pb-12 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
           <BackButton />
           
