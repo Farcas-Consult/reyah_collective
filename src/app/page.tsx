@@ -25,16 +25,6 @@ const allProducts = [
 ];
 
 export default function Home() {
-  // Add viewport meta tag for mobile responsiveness
-  if (typeof window !== 'undefined') {
-    const meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) {
-      const m = document.createElement('meta');
-      m.name = 'viewport';
-      m.content = 'width=device-width, initial-scale=1';
-      document.head.appendChild(m);
-    }
-  }
   const [isLoaded, setIsLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const { addToCart } = useCart();
@@ -177,12 +167,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <Header />
-      <main className="pt-[180px]">
+      <main className="pt-[100px] sm:pt-[140px] md:pt-[180px]">
         {/* Hero Banner with Sidebar - Jumia Style */}
         <section className="bg-white">
-          <div className="container mx-auto px-2 sm:px-4 max-w-7xl py-4">
+          <div className="container mx-auto px-2 sm:px-4 max-w-7xl py-2 sm:py-4">
             <div className="flex flex-col lg:flex-row gap-4">
               {/* Left Sidebar - Categories */}
               <div className="hidden lg:block w-64 flex-shrink-0">
@@ -223,7 +213,7 @@ export default function Home() {
               </div>
 
               {/* Center - Main Banner Slider */}
-              <div className="w-full lg:flex-1 relative h-[220px] sm:h-[320px] md:h-[400px] overflow-hidden rounded-lg bg-gradient-to-br from-black via-[var(--navy)] to-[var(--emerald-green)]">
+              <div className="w-full lg:flex-1 relative h-[180px] sm:h-[260px] md:h-[320px] lg:h-[400px] overflow-hidden rounded-lg bg-gradient-to-br from-black via-[var(--navy)] to-[var(--emerald-green)] mb-4 lg:mb-0">
                 {heroSlides.map((slide, index) => (
                   <div
                     key={index}
@@ -351,7 +341,7 @@ export default function Home() {
         <ActiveDeals />
 
         {/* Flash Sales */}
-        <section className="py-6 md:py-8 bg-gray-50">
+        <section className="py-4 sm:py-6 md:py-8 bg-gray-50">
           <div className="container mx-auto px-2 sm:px-4 max-w-7xl">
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <div className="flex items-center gap-3">
@@ -371,7 +361,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4">
               {flashDeals.map((product, i) => (
                 <div
                   key={i}
@@ -395,14 +385,14 @@ export default function Home() {
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
                       <div className="text-white text-xs font-semibold mb-1">🔥 {product.sold} sold</div>
                       <div className="w-full bg-gray-200/30 rounded-full h-1.5">
-                        <div
-                          className="bg-[var(--accent)] h-1.5 rounded-full"
+                        <div 
+                          className="bg-[var(--accent)] h-1.5 rounded-full" 
                           style={{ width: `${(product.sold / (product.sold + product.stock)) * 100}%` }}
-                          aria-label={`Sold: ${product.sold}`}
                         />
                       </div>
                     </div>
                   </Link>
+
                   <div className="p-3">
                     <Link href={`/product/${i + 1}`} className="block">
                       <h3 className="font-medium text-sm mb-1.5 line-clamp-2 text-[var(--brown-800)] group-hover:text-[var(--accent)] transition-colors">
@@ -428,15 +418,13 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <button
+                    <button 
                       onClick={() => handleAddToCart(product, i + 1)}
                       className={`w-full py-2 md:py-2.5 rounded-md text-sm font-bold transition-colors shadow-sm ${
                         addedToCart === i + 1
                           ? 'bg-green-600 text-white'
                           : 'bg-[var(--brown-800)] text-white hover:bg-[var(--brown-700)]'
                       }`}
-                      aria-label={addedToCart === i + 1 ? 'Added to cart' : 'Add to cart'}
-                      title={addedToCart === i + 1 ? 'Added to cart' : 'Add to cart'}
                     >
                       {addedToCart === i + 1 ? '✓ ADDED TO CART' : 'ADD TO CART'}
                     </button>
@@ -450,7 +438,7 @@ export default function Home() {
         {/* Promotional Banners */}
         <section className="py-0 bg-white">
           <div className="container mx-auto px-2 sm:px-4 max-w-7xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 py-4">
               <div className="relative h-32 md:h-40 rounded-xl overflow-hidden group cursor-pointer bg-gradient-to-r from-[var(--emerald-green)] to-[#0A5D3E]">
                 <div className="relative h-full flex flex-col justify-center px-6">
                   <svg className="w-10 h-10 md:w-12 md:h-12 text-white mb-2" fill="currentColor" viewBox="0 0 24 24">
@@ -485,7 +473,7 @@ export default function Home() {
         </section>
 
         {/* Top Picks */}
-        <section className="py-6 md:py-8 bg-white">
+        <section className="py-4 sm:py-6 md:py-8 bg-white">
           <div className="container mx-auto px-2 sm:px-4 max-w-7xl">
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <h2 className="text-xl md:text-2xl font-bold text-[var(--brown-800)]">🌟 Top Picks For You</h2>
@@ -497,7 +485,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
               {trendingProducts.map((product, i) => (
                 <div
                   key={i}
@@ -545,15 +533,13 @@ export default function Home() {
                       )}
                     </div>
 
-                    <button
+                    <button 
                       onClick={() => handleAddToCart(product, i + 5)}
                       className={`w-full py-1.5 rounded text-xs font-semibold transition-colors ${
                         addedToCart === i + 5
                           ? 'bg-green-600 text-white'
                           : 'bg-gray-100 text-[var(--brown-800)] hover:bg-[var(--accent)] hover:text-white'
                       }`}
-                      aria-label={addedToCart === i + 5 ? 'Added to cart' : 'Add to cart'}
-                      title={addedToCart === i + 5 ? 'Added to cart' : 'Add to cart'}
                     >
                       {addedToCart === i + 5 ? '✓ ADDED' : '+ ADD'}
                     </button>
@@ -565,7 +551,7 @@ export default function Home() {
         </section>
 
         {/* Featured Products */}
-        <section className="py-6 md:py-8 bg-gray-50">
+        <section className="py-4 sm:py-6 md:py-8 bg-gray-50">
           <div className="container mx-auto px-2 sm:px-4 max-w-7xl">
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <h2 className="text-xl md:text-2xl font-bold text-[var(--brown-800)]">Featured Products</h2>
@@ -577,7 +563,7 @@ export default function Home() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-4">
               {showcaseImages.map((item, i) => (
                 <Link
                   key={i}
@@ -606,7 +592,7 @@ export default function Home() {
         </section>
 
         {/* Shop Section */}
-        <section className="py-6 md:py-8 bg-white">
+        <section className="py-4 sm:py-6 md:py-8 bg-white">
           <div className="container mx-auto px-2 sm:px-4 max-w-7xl">
             <div className="flex items-center justify-between mb-4 md:mb-6">
               <h2 className="text-xl md:text-2xl font-bold text-[var(--brown-800)]">Shop by Department</h2>
@@ -796,8 +782,8 @@ export default function Home() {
         </section>
 
         {/* Recommendations Section */}
-        <section className="py-12">
-          <div className="max-w-7xl mx-auto px-2 sm:px-4 space-y-12">
+        <section className="py-8 sm:py-12">
+          <div className="max-w-7xl mx-auto px-2 sm:px-4 space-y-8 sm:space-y-12">
             <ProductRecommendations
               type="trending"
               allProducts={allProducts}
